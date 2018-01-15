@@ -1,0 +1,21 @@
+# user-specific properties for unit tests
+# naming convention is <test class name>.<member name>
+
+# This file is imported directly into the build.xml before being re-written out as
+# unit-tests.properties.
+# the prefix junit. is used to allow easy filtering when writing out the properties
+# at jar creation time.
+
+# This is the location of the jacozoom DLL for testing MSMQ
+junit.msmq.jacozoom.dll=${local.dll.dir}/izmjnicom.dll
+
+junit.ConsumerCase.baseDir=${example-xml.build.dir}/consumers
+junit.ServiceCase.baseDir=${example-xml.build.dir}/services
+junit.ProducerCase.baseDir=${example-xml.build.dir}/producers
+
+junit.MsmqConsumerExamples.baseDir=${junit.ConsumerCase.baseDir}
+
+junit.MsmqProducerExamples.baseDir=${junit.ProducerCase.baseDir}
+
+
+
