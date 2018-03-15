@@ -51,8 +51,8 @@ public class ChannelActivity extends BaseActivity implements Serializable {
     buffer.append("\tChannel = ");
     buffer.append(this.getUniqueId());
     buffer.append("\n");
-    for(WorkflowActivity channel : this.getWorkflows().values()) 
-      buffer.append(channel);
+    for(WorkflowActivity workflow : this.getWorkflows().values()) 
+      buffer.append(workflow);
     
     return buffer.toString();
   }

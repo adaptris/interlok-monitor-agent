@@ -2,10 +2,12 @@ package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.adaptris.profiler.ProcessStep;
 import com.adaptris.profiler.aspects.InterlokComponent;
+import com.adaptris.profiler.aspects.InterlokComponent.ComponentType;
 
 public class ActivityMap implements Serializable {
 
@@ -20,29 +22,29 @@ public class ActivityMap implements Serializable {
   public void addActivity(ProcessStep activity) {
     InterlokComponent interlokComponent = activity.getInterlokComponent();
 
-    if(!interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.ServiceList)) {
+    if (!interlokComponent.getComponentType().equals(ComponentType.ServiceList)) {
       InterlokComponent adapterComponent = null;
 
       try {
-        if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Adapter)) {
+        if (interlokComponent.getComponentType().equals(ComponentType.Adapter)) {
           adapterComponent = interlokComponent;
-        } else if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Channel)) {
+        } else if (interlokComponent.getComponentType().equals(ComponentType.Channel)) {
           adapterComponent = interlokComponent.getParent();
-        } else if (interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Workflow)) {
+        } else if (interlokComponent.getComponentType().equals(ComponentType.Workflow)) {
           adapterComponent = interlokComponent.getParent().getParent();
-        } else if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Service)) {
+        } else if (interlokComponent.getComponentType().equals(ComponentType.Service)) {
           adapterComponent = interlokComponent.getParent().getParent().getParent();
-        } else if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Producer)) {
+        } else if (interlokComponent.getComponentType().equals(ComponentType.Producer)) {
           adapterComponent = interlokComponent.getParent().getParent().getParent();
-        } else if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Consumer)) {
+        } else if (interlokComponent.getComponentType().equals(ComponentType.Consumer)) {
           adapterComponent = interlokComponent.getParent().getParent().getParent();
         }
       } catch (Throwable ex) {
         ex.printStackTrace();
       }
-      if(adapterComponent != null) {
+      if (adapterComponent != null) {
         AdapterActivity storedAdapterActivity = getAdapters().get(adapterComponent.getUniqueId());
-        if(storedAdapterActivity == null) {
+        if (storedAdapterActivity == null) {
           AdapterActivity adapterActivity = new AdapterActivity();
           adapterActivity.setUniqueId(adapterComponent.getUniqueId());
           applyComponents(adapterActivity, interlokComponent, activity);
@@ -55,27 +57,27 @@ public class ActivityMap implements Serializable {
   }
 
   private void applyComponents(AdapterActivity adapterActivity, InterlokComponent interlokComponent, ProcessStep step) {
-    if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Service)) {
+    if (interlokComponent.getComponentType().equals(ComponentType.Service)) {
       InterlokComponent channelComponent = interlokComponent.getParent().getParent();
       ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
-      if(channelActivity == null) {
+      if (channelActivity == null) {
         channelActivity = buildChannelActivity(channelComponent, adapterActivity);
         adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
       }
 
       InterlokComponent workflowComponent = interlokComponent.getParent();
       WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
-      if(workflowActivity == null) {
+      if (workflowActivity == null) {
         workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
         channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
       }
-      if(!workflowActivity.getMessageIds().contains(step.getMessageId())) {
+      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
         workflowActivity.addMessageId(step.getMessageId());
       }
 
       InterlokComponent serviceComponent = interlokComponent;
       ServiceActivity serviceActivity = workflowActivity.getServices().get(serviceComponent.getUniqueId());
-      if(serviceActivity == null) {
+      if (serviceActivity == null) {
         serviceActivity = buildServiceActivity(serviceComponent, workflowActivity);
         workflowActivity.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
       }
@@ -84,69 +86,59 @@ public class ActivityMap implements Serializable {
       serviceActivity.setMessageCount(serviceActivity.getMessageCount() + 1);
       serviceActivity.setServiceClass(step.getStepName());
 
-      long totalTaken = 0;
-      for(long msTaken : serviceActivity.getMsTaken()) {
-        totalTaken += msTaken;
-      }
+      long avgMsTaken = calculateAvgMsTaken(serviceActivity.getMsTaken());
+      serviceActivity.setAvgMsTaken(avgMsTaken);
 
-      serviceActivity.setAvgMsTaken(totalTaken / serviceActivity.getMsTaken().size());
-
-    } else if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Producer)) {
+    } else if (interlokComponent.getComponentType().equals(ComponentType.Producer)) {
       InterlokComponent channelComponent = interlokComponent.getParent().getParent();
       ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
-      if(channelActivity == null) {
+      if (channelActivity == null) {
         channelActivity = buildChannelActivity(channelComponent, adapterActivity);
         adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
       }
 
       InterlokComponent workflowComponent = interlokComponent.getParent();
       WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
-      if(workflowActivity == null) {
+      if (workflowActivity == null) {
         workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
         channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
       }
-      if(!workflowActivity.getMessageIds().contains(step.getMessageId())) {
+      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
         workflowActivity.addMessageId(step.getMessageId());
       }
 
       ProducerActivity producerActivity = workflowActivity.getProducerActivity();
-      if(producerActivity == null) {
+      if (producerActivity == null) {
         producerActivity = buildProducerActivity(interlokComponent, workflowActivity);
         workflowActivity.setProducerActivity(producerActivity);
       }
 
       producerActivity.addMessageId(step.getMessageId(), step.getTimeTakenMs());
-
-      producerActivity.addMessageId(step.getMessageId(), step.getTimeTakenMs());
       producerActivity.setMessageCount(producerActivity.getMessageCount() + 1);
 
-      long totalTaken = 0;
-      for(long msTaken : producerActivity.getMsTaken()) {
-        totalTaken += msTaken;
-      }
+      long avgMsTaken = calculateAvgMsTaken(producerActivity.getMsTaken());
+      producerActivity.setAvgMsTaken(avgMsTaken);
 
-      producerActivity.setAvgMsTaken(totalTaken / producerActivity.getMsTaken().size());
-
-    } else if(interlokComponent.getComponentType().equals(InterlokComponent.ComponentType.Consumer)) {
+    } else if (interlokComponent.getComponentType().equals(ComponentType.Consumer)) {
       InterlokComponent channelComponent = interlokComponent.getParent().getParent();
       ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
-      if(channelActivity == null) {
+      if (channelActivity == null) {
         channelActivity = buildChannelActivity(channelComponent, adapterActivity);
         adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
       }
 
       InterlokComponent workflowComponent = interlokComponent.getParent();
       WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
-      if(workflowActivity == null) {
+      if (workflowActivity == null) {
         workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
         channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
       }
-      if(!workflowActivity.getMessageIds().contains(step.getMessageId())) {
+      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
         workflowActivity.addMessageId(step.getMessageId());
       }
 
       ConsumerActivity consumerActivity = workflowActivity.getConsumerActivity();
-      if(consumerActivity == null) {
+      if (consumerActivity == null) {
         consumerActivity = buildConsumerActivity(interlokComponent, workflowActivity);
         workflowActivity.setConsumerActivity(consumerActivity);
       }
@@ -194,6 +186,14 @@ public class ActivityMap implements Serializable {
     serviceActivity.setUniqueId(serviceComponent.getUniqueId());
     serviceActivity.setParent(workflowActivity);
     return serviceActivity;
+  }
+
+  private long calculateAvgMsTaken(List<Long> msTakens) {
+    long totalTaken = 0;
+    for(long msTaken : msTakens) {
+      totalTaken += msTaken;
+    }
+    return totalTaken / msTakens.size();
   }
 
   public Map<String, AdapterActivity> getAdapters() {

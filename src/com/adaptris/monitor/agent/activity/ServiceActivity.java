@@ -54,7 +54,6 @@ public class ServiceActivity extends BaseActivity implements Serializable {
     this.messageCount = messageCount;
   }
 
-
   public List<Long> getMsTaken() {
     return msTaken;
   }
@@ -98,7 +97,7 @@ public class ServiceActivity extends BaseActivity implements Serializable {
     buffer.append("\t\t\tService = ");
     buffer.append(this.getUniqueId());
     buffer.append(" (");
-    buffer.append(this.getMessageIds().size());
+    buffer.append(this.getMessageCount());
     buffer.append(" at ");
     buffer.append(this.getAvgMsTaken());
     buffer.append("  ms");

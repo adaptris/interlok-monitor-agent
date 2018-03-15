@@ -87,7 +87,7 @@ public class ProducerActivity extends EndpointActivity implements Serializable {
     buffer.append("\t\t\tProducer = ");
     buffer.append(this.getUniqueId());
     buffer.append(" (");
-    buffer.append(this.getMessageIds().size());
+    buffer.append(this.getMessageCount());
     buffer.append(" at ");
     buffer.append(this.getAvgMsTaken());
     buffer.append("  ms");
