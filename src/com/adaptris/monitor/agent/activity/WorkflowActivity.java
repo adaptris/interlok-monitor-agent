@@ -6,16 +6,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.annotations.Expose;
+
 public class WorkflowActivity extends BaseActivity implements Serializable {
     
   private static final long serialVersionUID = -1630350826201321890L;
 
   private ChannelActivity parent;
   
+  @Expose
   private Map<String, ServiceActivity> services;
   
+  @Expose
   private ProducerActivity producerActivity;
-  
+  @Expose
   private ConsumerActivity consumerActivity;
   
   private List<String> messageIds;

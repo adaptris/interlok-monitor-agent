@@ -4,12 +4,15 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.google.gson.annotations.Expose;
+
 public class ChannelActivity extends BaseActivity implements Serializable {
   
   private static final long serialVersionUID = 1922768482203698311L;
 
   private AdapterActivity parent;
   
+  @Expose
   private Map<String, WorkflowActivity> workflows;
   
   public ChannelActivity() {

@@ -10,8 +10,6 @@
 
   <target name="init">
 
-    <property name="ivy.publish.revision" value="3.7-SNAPSHOT"/>  <!-- Version number of this artifact -->
-    <property name="adp-core-version" value="3.7-SNAPSHOT"/>
     <property name="manifest.title" value="Interlok/Monitor"/>
     <property name="src.dir" value="${basedir}/src"/>
     <property name="testsrc.dir" value="${basedir}/test/src"/>
@@ -32,7 +30,7 @@
 
     <property name="javac.include.classes"  value="**/*.java" />
     <property name="junit.test.classes"     value="**/*Test*.java" />
-    <property name="javac.target.version"   value="1.7"/>
+    <property name="javac.target.version"   value="1.8"/>
     <patternset id="javac.exclude.sources">
     </patternset>
 
@@ -51,7 +49,7 @@
 
     <property name="tmp.jar.name" value = "${project.name}-tmp.jar"/>
     <property name="yguard.report" value="${build.dir}/${project.name}-${jar.version}.yguard.xml.gz"/>
-
+	<echo message="ivy publish version is: ${ivy.publish.revision}" />
   </target>
 
   <target name="prepare" depends="init, prepare-ivy">

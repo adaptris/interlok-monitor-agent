@@ -3,6 +3,7 @@ package com.adaptris.monitor.agent.activity;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import com.google.gson.annotations.Expose;
 
 public class ServiceActivity extends BaseActivity implements Serializable {
     
@@ -13,11 +14,11 @@ public class ServiceActivity extends BaseActivity implements Serializable {
   private List<String> messageIds;
   
   private List<Long> msTaken;
-  
+  @Expose
   private int messageCount;
-  
+  @Expose
   private long avgMsTaken;
-  
+  @Expose
   private String serviceClass;
   
   public ServiceActivity() {

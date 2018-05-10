@@ -61,8 +61,7 @@
     <property name="cc.classpath" refid="main.classpath"/>
     <echo message="Ivy Resolved Classpath - ${cc.classpath}" level="verbose"/>
     <echo message="Ivy Resolved Classpath for ant - ${anttools.classpath}" level="verbose"/>
-    <!-- yguard obfuscator -->
-    <taskdef name="obfuscate" classname="com.yworks.yguard.YGuardTask" classpathref="classpath.ant-tools" />
+
     <!-- antcontrib (if statements) -->
     <typedef resource="net/sf/antcontrib/antlib.xml" classpathref="classpath.ant-tools" />
     <!-- jacoco coverage -->
@@ -122,8 +121,10 @@
       <attribute name="manifest"/>
       <attribute name="version" default="${ivy.publish.revision}"/>
       <attribute name="version-title"/>
+	  
       <element name="obfuscate-patternset" optional="true"/>
       <element name="obfuscate-externals" optional="true"/>
+	  
       <element name="jar-services" optional="true"/>
       <sequential>
         <mkdir dir="@{basedir}/META-INF"/>
@@ -133,6 +134,11 @@
           <entry key="build.date" value="${build.date}"/>
         </propertyfile>
         <var name="tmp.jar" value="${build.dir}/tmp.jar"/>
+		<jar jarfile="@{jarfile}"  manifest="@{manifest}" >
+              <fileset dir="@{basedir}"/>
+              <jar-services/>
+		</jar>
+		<!--
         <if>
           <istrue value="${no.obfuscation}"/>
           <then>
@@ -156,11 +162,12 @@
             </adapter:obfuscate>
           </else>
         </if>
+		-->
         <adapter:sign-jar jarfile="@{jarfile}"/>
         <var name="tmp.jar" unset="true"/>
       </sequential>
     </macrodef>
-
+<!--
     <macrodef name="obfuscate" uri="uri:adapter">
       <attribute name="input.jar"/>
       <attribute name="output.jar"/>
@@ -199,7 +206,7 @@
         <delete file="@{input.jar}"/>
       </sequential>
     </macrodef>
-
+-->
 
     <macrodef name="create-javadocs" uri="uri:adapter">
       <attribute name="destdir" default="${api.doc.dir}"/>
