@@ -28,7 +28,7 @@
 		<dependency org="com.adaptris" name="adp-core-apt" rev="${adp-core-version}" conf="compile->default;ant->default" changing="true"/>
 
 		<dependency org="org.apache.activemq" name="activemq-client" rev="5.15.2"  conf="compile->default"  />
-		<dependency org="com.google.code.gson" name="gson" rev="1.4"/>
+		<dependency org="com.google.code.gson" name="gson" rev="1.4" conf="compile->default" />
 
 		<dependency org="com.adaptris" name="adp-profiler" rev="${adp-core-version}" conf="test->default" changing="false"/>
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.12" conf="compile->default" />

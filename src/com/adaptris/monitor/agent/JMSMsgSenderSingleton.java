@@ -1,9 +1,9 @@
 package com.adaptris.monitor.agent;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 import java.util.Properties;
 
@@ -16,6 +16,8 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.adaptris.monitor.agent.activity.ActivityMap;
 import com.adaptris.monitor.agent.activity.ConsumerActivity;
@@ -32,6 +34,8 @@ import com.google.gson.annotations.Expose;
  *
  */
 public class JMSMsgSenderSingleton implements EventReceiverListener {
+    protected transient Logger log = LoggerFactory.getLogger(this.getClass());
+  
 	private static final String JMS_PROPERTIES_FILE = "jms.properties";
 	
 	private enum JMSProperty {
@@ -58,8 +62,8 @@ public class JMSMsgSenderSingleton implements EventReceiverListener {
 		try {
 			openJMSConnection(jmsConfigMap);
 		} catch (JMSException e) {
-			System.err.println("Failed to open JMS connection: " + e.getMessage());
-			throw e;
+		    log.error("Failed to open JMS connection: {}", e.getMessage(), e);
+		    throw e;
 		}
 		GsonBuilder gsonBuilder = new GsonBuilder();
 		gsonBuilder.registerTypeAdapter(ConsumerActivity.class, new ConsumerActivitySerializer());
@@ -76,16 +80,17 @@ public class JMSMsgSenderSingleton implements EventReceiverListener {
 	}
 
 	private EnumMap<JMSProperty, String> readJMSProperties() {
+	    log.debug("reading JMS properties");
 		EnumMap<JMSProperty, String> jmsConfigMap = new EnumMap<>(JMSProperty.class);
 		Properties prop = new Properties();
-		try(InputStream input = new FileInputStream(JMS_PROPERTIES_FILE);) {
+
+		try(final InputStream input = this.getClass().getClassLoader().getResourceAsStream(JMS_PROPERTIES_FILE)) {
 			prop.load(input);
 			for(JMSProperty jmsProperty : JMSProperty.values()) {
 				jmsConfigMap.put(jmsProperty, prop.getProperty(jmsProperty.toString()));
 			}
-			
 		} catch (IOException e) {
-			System.err.println("Failed to open jms properties file: " + JMS_PROPERTIES_FILE);
+		    log.error("Failed to open jms properties file: {}", JMS_PROPERTIES_FILE, e);
 			return null;
 		}
 		return jmsConfigMap;
@@ -116,7 +121,7 @@ public class JMSMsgSenderSingleton implements EventReceiverListener {
 			session.close();
 			connection.close();
 		} catch (JMSException e) {
-			System.err.println("Failed to close JMS session and/or connection: "+e.getMessage());
+		  log.error("Failed to close JMS session and/or connection: {}", e.getMessage(), e);
 		}
 	}
 
@@ -126,30 +131,30 @@ public class JMSMsgSenderSingleton implements EventReceiverListener {
         TextMessage message = session.createTextMessage(textMsg);
 
         // Tell the producer to send the message
-        System.out.println("Sending message: "+ message.hashCode() + " : " + Thread.currentThread().getName());
+        log.trace("Sending json message to broker: "+ message.hashCode() + " : " + Thread.currentThread().getName());
         producer.send(message);
 	}
 
 	@Override
 	public void eventReceived(ActivityMap activityMap) {
-		System.out.println("Event received");
+		log.debug("Event received: {}", activityMap.toString());
 		try {
 			String json = gson.toJson(new ActivtyWrapper(activityMap));
 			sendMessage(json);
 		} catch (JMSException e) {
-			System.err.println("Failed to send msg to JMS broker");
+		  log.error("Failed to send msg to JMS broker", e);
 		}
 	}
 	
 	// Wrapper class to allow us to add a datestamp to the json output
 	private class ActivtyWrapper {
 		@Expose
-		LocalDateTime datetimestamp;
+		String datetimestamp;
 		@Expose
 		ActivityMap adapterMetrics;
 		
 		public ActivtyWrapper(ActivityMap metrics) {
-			datetimestamp = LocalDateTime.now();
+			datetimestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 			adapterMetrics = metrics;
 		}
 	}
