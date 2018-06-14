@@ -131,13 +131,14 @@ public class JMSMsgSenderSingleton implements EventReceiverListener {
         TextMessage message = session.createTextMessage(textMsg);
 
         // Tell the producer to send the message
-        log.trace("Sending json message to broker: "+ message.hashCode() + " : " + Thread.currentThread().getName());
+        log.debug("Sending json message to broker: "+ message.hashCode() + " : " + Thread.currentThread().getName());
         producer.send(message);
 	}
 
 	@Override
 	public void eventReceived(ActivityMap activityMap) {
-		log.debug("Event received: {}", activityMap.toString());
+//		log.trace("Event received: {}", activityMap.toString());
+	  log.debug("Event received");
 		try {
 			String json = gson.toJson(new ActivtyWrapper(activityMap));
 			sendMessage(json);

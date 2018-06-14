@@ -98,10 +98,12 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     buffer.append(this.getMessageIds().size());
     buffer.append(")");
     buffer.append("\n");
-    buffer.append(this.getConsumerActivity());
+    ConsumerActivity consumerActivity2 = this.getConsumerActivity();
+    buffer.append(consumerActivity2 != null? consumerActivity2 : "");
     for(ServiceActivity service : this.getServices().values()) 
       buffer.append(service);
-    buffer.append(this.getProducerActivity());
+    ProducerActivity producerActivity2 = this.getProducerActivity();
+    buffer.append(producerActivity2 != null? producerActivity2 : "");
     
     return buffer.toString();
   }

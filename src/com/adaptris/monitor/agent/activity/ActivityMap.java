@@ -24,7 +24,6 @@ public class ActivityMap implements Serializable {
   public void addActivity(ProcessStep activity) {
     InterlokComponent interlokComponent = activity.getInterlokComponent();
 
-    if (!interlokComponent.getComponentType().equals(ComponentType.ServiceList)) {
       InterlokComponent adapterComponent = null;
 
       try {
@@ -55,7 +54,6 @@ public class ActivityMap implements Serializable {
           applyComponents(storedAdapterActivity, interlokComponent, activity);
         }
       }
-    }
   }
 
   private void applyComponents(AdapterActivity adapterActivity, InterlokComponent interlokComponent, ProcessStep step) {
