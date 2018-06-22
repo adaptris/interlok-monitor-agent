@@ -84,7 +84,7 @@ public class ActivityMap implements Serializable {
 
       serviceActivity.addMessageId(step.getMessageId(), step.getTimeTakenMs());
       serviceActivity.setMessageCount(serviceActivity.getMessageCount() + 1);
-      serviceActivity.setServiceClass(step.getStepName());
+      serviceActivity.setClassName(step.getStepName());
 
       long avgMsTaken = calculateAvgMsTaken(serviceActivity.getMsTaken());
       serviceActivity.setAvgMsTaken(avgMsTaken);
@@ -143,7 +143,12 @@ public class ActivityMap implements Serializable {
         workflowActivity.setConsumerActivity(consumerActivity);
       }
 
-      consumerActivity.addMessageId(step.getMessageId());
+      consumerActivity.addMessageId(step.getMessageId(), step.getTimeTakenMs());
+      consumerActivity.setMessageCount(consumerActivity.getMessageCount() + 1);
+
+      long avgMsTaken = calculateAvgMsTaken(consumerActivity.getMsTaken());
+      consumerActivity.setAvgMsTaken(avgMsTaken);
+
     }
   }
 
@@ -166,7 +171,7 @@ public class ActivityMap implements Serializable {
     consumerActivity.setUniqueId(consumerComponent.getUniqueId());
     consumerActivity.setParent(workflowActivity);
     consumerActivity.setDestination(consumerComponent.getDestination());
-    consumerActivity.setConsumerClass(consumerComponent.getClassName());
+    consumerActivity.setClassName(consumerComponent.getClassName());
     consumerActivity.setVendorImpClass(consumerComponent.getVendorImp());
     return consumerActivity;
   }
@@ -176,7 +181,7 @@ public class ActivityMap implements Serializable {
     producerActivity.setUniqueId(producerComponent.getUniqueId());
     producerActivity.setParent(workflowActivity);
     producerActivity.setDestination(producerComponent.getDestination());
-    producerActivity.setConsumerClass(producerComponent.getClassName());
+    producerActivity.setClassName(producerComponent.getClassName());
     producerActivity.setVendorImpClass(producerComponent.getVendorImp());
     return producerActivity;
   }

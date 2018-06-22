@@ -1,64 +1,57 @@
 package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ConsumerActivity extends EndpointActivity implements Serializable {
-    
+
   private static final long serialVersionUID = 2243255282200998908L;
 
-  private WorkflowActivity parent;
-  
-  private List<String> messageIds;
-  
-  public ConsumerActivity() {
-    messageIds = new ArrayList<String>();
-  }
-  
-  public void addMessageId(String messageId) {
-    this.getMessageIds().add(messageId);
-  }
-
-  public WorkflowActivity getParent() {
-    return parent;
-  }
-
-  public void setParent(WorkflowActivity parent) {
-    this.parent = parent;
-  }
-
-  public List<String> getMessageIds() {
-    return messageIds;
-  }
-
-  public void setMessageIds(List<String> messageIds) {
-    this.messageIds = messageIds;
-  }
-  
+  @Override
   public boolean equals(Object object) {
-    if(object instanceof ConsumerActivity) {
-      if(((ConsumerActivity) object).getUniqueId().equals(this.getUniqueId())) {
-        if(((ConsumerActivity) object).getParent().getUniqueId().equals(this.getParent().getUniqueId())) {
-          if(((ConsumerActivity) object).getParent().getParent().getUniqueId().equals(this.getParent().getParent().getUniqueId())) {
-            if(((ConsumerActivity) object).getParent().getParent().getParent().getUniqueId().equals(this.getParent().getParent().getParent().getUniqueId())) 
+    if (object instanceof ConsumerActivity) {
+      if (((ConsumerActivity) object).getUniqueId().equals(getUniqueId())) {
+        if (((ConsumerActivity) object).getParent().getUniqueId().equals(getParent().getUniqueId())) {
+          if (((ConsumerActivity) object).getGrandParent().getUniqueId().equals(getGrandParent().getUniqueId())) {
+            if (((ConsumerActivity) object).getGreatGrandParent().getUniqueId().equals(getGreatGrandParent().getUniqueId())) {
               return true;
+            }
           }
         }
       }
     }
     return false;
   }
-  
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
+    if (getParent() != null) {
+      result = prime * result + (getParent().getUniqueId() == null ? 0 : getParent().getUniqueId().hashCode());
+      if (getGrandParent() != null) {
+        result = prime * result + (getGrandParent().getUniqueId() == null ? 0 : getGrandParent().getUniqueId().hashCode());
+        if (getGreatGrandParent() != null) {
+          result = prime * result + (getGreatGrandParent().getUniqueId() == null ? 0 : getGreatGrandParent().getUniqueId().hashCode());
+        }
+      }
+    }
+    return result;
+  }
+
+  @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     buffer.append("\t\t\tConsumer = ");
-    buffer.append(this.getUniqueId());
+    buffer.append(getUniqueId());
     buffer.append(" (");
-    buffer.append(this.getMessageIds().size());
+    buffer.append(getMessageCount());
+    buffer.append(" at ");
+    buffer.append(getAvgMsTaken());
+    buffer.append("  ms");
     buffer.append(")");
     buffer.append("\n");
-    
+
     return buffer.toString();
   }
 

@@ -7,26 +7,26 @@ import java.util.List;
 import java.util.Map;
 
 public class WorkflowActivity extends BaseActivity implements Serializable {
-    
+
   private static final long serialVersionUID = -1630350826201321890L;
 
   private ChannelActivity parent;
-  
+
   private Map<String, ServiceActivity> services;
-  
+
   private ProducerActivity producerActivity;
-  
+
   private ConsumerActivity consumerActivity;
-  
+
   private List<String> messageIds;
-  
+
   public WorkflowActivity() {
     services = new LinkedHashMap<>();
     messageIds = new ArrayList<>();
   }
 
   public void addServiceActivity(ServiceActivity serviceActivity) {
-    this.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+    getServices().put(serviceActivity.getUniqueId(), serviceActivity);
   }
 
   public ChannelActivity getParent() {
@@ -37,6 +37,10 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     this.parent = parent;
   }
 
+  public AdapterActivity getGrandParent() {
+    return getParent() == null ? null : getParent().getParent();
+  }
+
   public Map<String, ServiceActivity> getServices() {
     return services;
   }
@@ -44,22 +48,39 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
   public void setServices(Map<String, ServiceActivity> services) {
     this.services = services;
   }
-  
+
+  @Override
   public boolean equals(Object object) {
-    if(object instanceof WorkflowActivity) {
-      if(((WorkflowActivity) object).getUniqueId().equals(this.getUniqueId())) {
-        if(((WorkflowActivity) object).getParent().getUniqueId().equals(this.getParent().getUniqueId())) {
-          if(((WorkflowActivity) object).getParent().getParent().getUniqueId().equals(this.getParent().getParent().getUniqueId()))
+    if (object instanceof WorkflowActivity) {
+      if (((WorkflowActivity) object).getUniqueId().equals(getUniqueId())) {
+        if (((WorkflowActivity) object).getParent().getUniqueId().equals(getParent().getUniqueId())) {
+          if (((WorkflowActivity) object).getGrandParent().getUniqueId().equals(getGrandParent().getUniqueId())) {
             return true;
+          }
         }
       }
     }
     return false;
   }
-  
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
+    if (getParent() != null) {
+      result = prime * result + (getParent().getUniqueId() == null ? 0 : getParent().getUniqueId().hashCode());
+      if (getGrandParent() != null) {
+        result = prime * result + (getGrandParent().getUniqueId() == null ? 0 : getGrandParent().getUniqueId().hashCode());
+      }
+    }
+    return result;
+  }
+
   public void addMessageId(String messageId) {
-    if(!this.getMessageIds().contains(messageId))
-      this.getMessageIds().add(messageId);
+    if(!getMessageIds().contains(messageId)) {
+      getMessageIds().add(messageId);
+    }
   }
 
   public List<String> getMessageIds() {
@@ -77,7 +98,7 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
   public void setProducerActivity(ProducerActivity producerActivity) {
     this.producerActivity = producerActivity;
   }
-  
+
   public ConsumerActivity getConsumerActivity() {
     return consumerActivity;
   }
@@ -86,19 +107,21 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     this.consumerActivity = consumerActivity;
   }
 
+  @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     buffer.append("\t\tWorkflow = ");
-    buffer.append(this.getUniqueId());
+    buffer.append(getUniqueId());
     buffer.append(" (");
-    buffer.append(this.getMessageIds().size());
+    buffer.append(getMessageIds().size());
     buffer.append(")");
     buffer.append("\n");
-    buffer.append(this.getConsumerActivity());
-    for(ServiceActivity service : this.getServices().values()) 
+    buffer.append(getConsumerActivity());
+    for(ServiceActivity service : getServices().values()) {
       buffer.append(service);
-    buffer.append(this.getProducerActivity());
-    
+    }
+    buffer.append(getProducerActivity());
+
     return buffer.toString();
   }
 

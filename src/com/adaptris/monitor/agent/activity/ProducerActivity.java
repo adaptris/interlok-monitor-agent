@@ -1,99 +1,57 @@
 package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ProducerActivity extends EndpointActivity implements Serializable {
-    
+
   private static final long serialVersionUID = 2243255282200998908L;
 
-  private WorkflowActivity parent;
-  
-  private List<String> messageIds;
-  
-  private List<Long> msTaken;
-  
-  private int messageCount;
-  
-  private long avgMsTaken;
-  
-  public ProducerActivity() {
-    messageIds = new ArrayList<String>();
-    msTaken = new ArrayList<>();
-  }
-  
-  public void addMessageId(String messageId, long timeTaken) {
-    this.getMessageIds().add(messageId);
-    this.getMsTaken().add(timeTaken);
-  }
-
-  public WorkflowActivity getParent() {
-    return parent;
-  }
-
-  public void setParent(WorkflowActivity parent) {
-    this.parent = parent;
-  }
-
-  public List<String> getMessageIds() {
-    return messageIds;
-  }
-
-  public void setMessageIds(List<String> messageIds) {
-    this.messageIds = messageIds;
-  }
-  
+  @Override
   public boolean equals(Object object) {
-    if(object instanceof ProducerActivity) {
-      if(((ProducerActivity) object).getUniqueId().equals(this.getUniqueId())) {
-        if(((ProducerActivity) object).getParent().getUniqueId().equals(this.getParent().getUniqueId())) {
-          if(((ProducerActivity) object).getParent().getParent().getUniqueId().equals(this.getParent().getParent().getUniqueId())) {
-            if(((ProducerActivity) object).getParent().getParent().getParent().getUniqueId().equals(this.getParent().getParent().getParent().getUniqueId())) 
+    if (object instanceof ProducerActivity) {
+      if (((ProducerActivity) object).getUniqueId().equals(getUniqueId())) {
+        if (((ProducerActivity) object).getParent().getUniqueId().equals(getParent().getUniqueId())) {
+          if (((ProducerActivity) object).getGrandParent().getUniqueId().equals(getGrandParent().getUniqueId())) {
+            if (((ProducerActivity) object).getGreatGrandParent().getUniqueId().equals(getGreatGrandParent().getUniqueId())) {
               return true;
+            }
           }
         }
       }
     }
     return false;
   }
-  
-  public List<Long> getMsTaken() {
-    return msTaken;
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
+    if (getParent() != null) {
+      result = prime * result + (getParent().getUniqueId() == null ? 0 : getParent().getUniqueId().hashCode());
+      if (getGrandParent() != null) {
+        result = prime * result + (getGrandParent().getUniqueId() == null ? 0 : getGrandParent().getUniqueId().hashCode());
+        if (getGreatGrandParent() != null) {
+          result = prime * result + (getGreatGrandParent().getUniqueId() == null ? 0 : getGreatGrandParent().getUniqueId().hashCode());
+        }
+      }
+    }
+    return result;
   }
 
-  public void setMsTaken(List<Long> msTaken) {
-    this.msTaken = msTaken;
-  }
-
-  public int getMessageCount() {
-    return messageCount;
-  }
-
-  public void setMessageCount(int messageCount) {
-    this.messageCount = messageCount;
-  }
-
-  public long getAvgMsTaken() {
-    return avgMsTaken;
-  }
-
-  public void setAvgMsTaken(long avgMsTaken) {
-    this.avgMsTaken = avgMsTaken;
-  }
-
+  @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     buffer.append("\t\t\tProducer = ");
-    buffer.append(this.getUniqueId());
+    buffer.append(getUniqueId());
     buffer.append(" (");
-    buffer.append(this.getMessageCount());
+    buffer.append(getMessageCount());
     buffer.append(" at ");
-    buffer.append(this.getAvgMsTaken());
+    buffer.append(getAvgMsTaken());
     buffer.append("  ms");
     buffer.append(")");
     buffer.append("\n");
-    
+
     return buffer.toString();
   }
 
