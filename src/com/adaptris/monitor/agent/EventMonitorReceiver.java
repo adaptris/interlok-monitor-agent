@@ -1,6 +1,8 @@
 package com.adaptris.monitor.agent;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,41 +18,41 @@ import com.adaptris.profiler.client.EventReceiver;
 public final class EventMonitorReceiver implements EventReceiver, LifecycleEventReceiver {
 
   private static EventMonitorReceiver INSTANCE;
-  
+
   private EventPropagator eventPropagator;
-  
-  private List<ProcessStep> unprocessedEvents;
-  
-  private List<ComponentEvent> unprocessedLifecycleEvents;
-  
-  private ReentrantLock unprocessedListLock = new ReentrantLock(false);
-  
-  private ReentrantLock unprocessedComponentEventLock = new ReentrantLock(false);
-  
+
+  private final List<ProcessStep> unprocessedEvents;
+
+  private final List<ComponentEvent> unprocessedLifecycleEvents;
+
+  private final ReentrantLock unprocessedListLock = new ReentrantLock(false);
+
+  private final ReentrantLock unprocessedComponentEventLock = new ReentrantLock(false);
+
   private EventMonitorReceiver() {
     unprocessedEvents = new ArrayList<>();
     unprocessedLifecycleEvents = new ArrayList<>();
     eventPropagator = new MulticastEventPropagator(this);
   }
-  
+
   public static EventMonitorReceiver getInstance() {
     if(INSTANCE == null) {
       INSTANCE = new EventMonitorReceiver();
-      
+
       new Thread(new Runnable() {
-        
+
         @Override
         public void run() {
           ExecutorService newSingleThreadExecutor = Executors.newSingleThreadExecutor();
           newSingleThreadExecutor.submit(INSTANCE.getEventPropagator());
         }
       }).start();
-      
+
     }
-    
+
     return INSTANCE;
   }
-  
+
   @Override
   public void onEvent(ProcessStep processStep) {
     unprocessedListLock.lock();
@@ -60,18 +62,19 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
       unprocessedListLock.unlock();
     }
   }
-  
+
   public List<ProcessStep> getEvents() {
     unprocessedListLock.lock();
     try {
-       ArrayList<ProcessStep> returnedList = new ArrayList<ProcessStep>(unprocessedEvents);
-       unprocessedEvents.clear();
-       return returnedList;
+      ArrayList<ProcessStep> returnedList = new ArrayList<ProcessStep>(unprocessedEvents);
+      Collections.sort(returnedList, new ProcessStepComparator());
+      unprocessedEvents.clear();
+      return returnedList;
     } finally {
       unprocessedListLock.unlock();
     }
   }
-  
+
   public List<ComponentEvent> getLifeCycleEvents() {
     try {
       unprocessedComponentEventLock.lock();
@@ -101,7 +104,7 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
     if(component instanceof Adapter) {
       ComponentEvent lifecycleEvent = buildLifecycleEvent(component, ComponentEvent.Event.INIT);
       try {
-        
+
         unprocessedComponentEventLock.lock();
         unprocessedLifecycleEvents.add(lifecycleEvent);
       } finally {
@@ -141,14 +144,22 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
       Adapter adapter = (Adapter) component;
       AdapterStructure adapterStructure = new AdapterStructure();
       adapterStructure.build(adapter);
-      
+
       ComponentEvent componentEvent = new ComponentEvent();
       componentEvent.setEvent(lifecycleEvent);
       componentEvent.setComponent(adapterStructure);
-      
+
       return componentEvent;
-    } else
+    } else {
       return null;
+    }
+  }
+
+  private static class ProcessStepComparator implements Comparator<ProcessStep> {
+    @Override
+    public int compare(ProcessStep ps1, ProcessStep ps2) {
+      return ps1.getOrder() < ps2.getOrder() ? -1 : ps1.getOrder() > ps2.getOrder() ? 1 : 0;
+    }
   }
 
   public EventPropagator getEventPropagator() {
@@ -158,5 +169,5 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
   public void setEventPropagator(EventPropagator eventPropagator) {
     this.eventPropagator = eventPropagator;
   }
-  
+
 }
