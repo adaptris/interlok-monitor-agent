@@ -4,13 +4,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseFlowActivity extends BaseActivity implements Serializable {
+public abstract class BaseFlowActivity extends BaseActivity implements Activity, Serializable {
 
   private static final long serialVersionUID = -835661861179574261L;
 
   private String className;
-
-  private WorkflowActivity parent;
 
   private List<String> messageIds;
 
@@ -31,14 +29,6 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
 
   public void setClassName(String className) {
     this.className = className;
-  }
-
-  public WorkflowActivity getParent() {
-    return parent;
-  }
-
-  public void setParent(WorkflowActivity parent) {
-    this.parent = parent;
   }
 
   public List<String> getMessageIds() {
@@ -76,14 +66,6 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
 
   public void setAvgMsTaken(long avgMsTaken) {
     this.avgMsTaken = avgMsTaken;
-  }
-
-  public ChannelActivity getGrandParent() {
-    return getParent() == null ? null : getParent().getParent();
-  }
-
-  public AdapterActivity getGreatGrandParent() {
-    return getGrandParent() == null ? null : getGrandParent().getParent();
   }
 
 }

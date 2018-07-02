@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WorkflowActivity extends BaseActivity implements Serializable {
+public class WorkflowActivity extends BaseActivity implements ServiceContainerActivity, Serializable {
 
   private static final long serialVersionUID = -1630350826201321890L;
 
@@ -25,10 +25,12 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     messageIds = new ArrayList<>();
   }
 
+  @Override
   public void addServiceActivity(ServiceActivity serviceActivity) {
     getServices().put(serviceActivity.getUniqueId(), serviceActivity);
   }
 
+  @Override
   public ChannelActivity getParent() {
     return parent;
   }
@@ -41,10 +43,12 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     return getParent() == null ? null : getParent().getParent();
   }
 
+  @Override
   public Map<String, ServiceActivity> getServices() {
     return services;
   }
 
+  @Override
   public void setServices(Map<String, ServiceActivity> services) {
     this.services = services;
   }

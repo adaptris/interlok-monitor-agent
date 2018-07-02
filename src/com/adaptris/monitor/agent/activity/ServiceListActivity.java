@@ -1,29 +1,42 @@
 package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-public class ServiceActivity extends BaseFlowActivity implements Serializable {
+public class ServiceListActivity extends ServiceActivity implements ServiceContainerActivity, Serializable {
 
-  private static final long serialVersionUID = 5440965750057494954L;
+  private static final long serialVersionUID = -3976993281634955783L;
 
-  private ServiceContainerActivity parent;
+  private Map<String, ServiceActivity> services;
 
-  @Override
-  public ServiceContainerActivity getParent() {
-    return parent;
+
+  public ServiceListActivity() {
+    services = new LinkedHashMap<>();
   }
 
-  public void setParent(ServiceContainerActivity parent) {
-    this.parent = parent;
+  @Override
+  public void addServiceActivity(ServiceActivity serviceActivity) {
+    getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+  }
+
+  @Override
+  public Map<String, ServiceActivity> getServices() {
+    return services;
+  }
+
+  @Override
+  public void setServices(Map<String, ServiceActivity> services) {
+    this.services = services;
   }
 
   @Override
   public boolean equals(Object object) {
     boolean equals = false;
-    if (object instanceof ServiceActivity) {
-      if (((ServiceActivity) object).getUniqueId().equals(getUniqueId())) {
+    if (object instanceof ServiceListActivity) {
+      if (((ServiceListActivity) object).getUniqueId().equals(getUniqueId())) {
         Activity parent = getParent();
-        Activity objParent = ((ServiceActivity) object).getParent();
+        Activity objParent = ((ServiceListActivity) object).getParent();
         equals = true;
         while (parent != null && objParent != null) {
           if (parent.getUniqueId().equals(objParent.getUniqueId())) {
@@ -56,7 +69,7 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
   @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
-    buffer.append("\t\t\tService = ");
+    buffer.append("\t\t\tServiceCollection = ");
     buffer.append(getUniqueId());
     buffer.append(" (");
     buffer.append(getMessageCount());
@@ -65,6 +78,9 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
     buffer.append("  ms");
     buffer.append(")");
     buffer.append("\n");
+    for (ServiceActivity service : getServices().values()) {
+      buffer.append("\t").append(service);
+    }
 
     return buffer.toString();
   }

@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ChannelActivity extends BaseActivity implements Serializable {
+public class ChannelActivity extends BaseActivity implements Activity, Serializable {
 
   private static final long serialVersionUID = 1922768482203698311L;
 
@@ -20,6 +20,7 @@ public class ChannelActivity extends BaseActivity implements Serializable {
     getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
   }
 
+  @Override
   public AdapterActivity getParent() {
     return parent;
   }

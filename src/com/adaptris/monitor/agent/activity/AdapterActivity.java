@@ -27,6 +27,11 @@ public class AdapterActivity extends BaseActivity implements Serializable {
   }
 
   @Override
+  public Activity getParent() {
+    throw new UnsupportedOperationException("AdapterActivity cannot get parent");
+  }
+
+  @Override
   public boolean equals(Object object) {
     if(object instanceof AdapterActivity) {
       if(((AdapterActivity) object).getUniqueId().equals(getUniqueId())) {

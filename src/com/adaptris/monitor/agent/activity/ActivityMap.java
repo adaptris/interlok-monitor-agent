@@ -1,9 +1,14 @@
 package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.adaptris.profiler.ProcessStep;
 import com.adaptris.profiler.aspects.InterlokComponent;
@@ -13,6 +18,8 @@ public class ActivityMap implements Serializable {
 
   private static final long serialVersionUID = 2523877428476982945L;
 
+  private transient Logger log = LoggerFactory.getLogger(this.getClass());
+
   private Map<String, AdapterActivity> adapters;
 
   public ActivityMap() {
@@ -21,91 +28,73 @@ public class ActivityMap implements Serializable {
 
   public void addActivity(ProcessStep activity) {
     InterlokComponent interlokComponent = activity.getInterlokComponent();
+    InterlokComponent adapterComponent = null;
 
-    if (!interlokComponent.getComponentType().equals(ComponentType.ServiceList)) {
-      InterlokComponent adapterComponent = null;
-
-      try {
-        if (interlokComponent.getComponentType().equals(ComponentType.Adapter)) {
-          adapterComponent = interlokComponent;
-        } else if (interlokComponent.getComponentType().equals(ComponentType.Channel)) {
-          adapterComponent = interlokComponent.getParent();
-        } else if (interlokComponent.getComponentType().equals(ComponentType.Workflow)) {
-          adapterComponent = interlokComponent.getParent().getParent();
-        } else if (interlokComponent.getComponentType().equals(ComponentType.Service)) {
-          adapterComponent = interlokComponent.getParent().getParent().getParent();
-        } else if (interlokComponent.getComponentType().equals(ComponentType.Producer)) {
-          adapterComponent = interlokComponent.getParent().getParent().getParent();
-        } else if (interlokComponent.getComponentType().equals(ComponentType.Consumer)) {
-          adapterComponent = interlokComponent.getParent().getParent().getParent();
-        }
-      } catch (Throwable ex) {
-        ex.printStackTrace();
+    try {
+      if (interlokComponent.getComponentType().equals(ComponentType.Adapter)) {
+        adapterComponent = interlokComponent;
+      } else {
+        adapterComponent = findAdapterParent(interlokComponent);
       }
-      if (adapterComponent != null) {
-        AdapterActivity storedAdapterActivity = getAdapters().get(adapterComponent.getUniqueId());
-        if (storedAdapterActivity == null) {
-          AdapterActivity adapterActivity = new AdapterActivity();
-          adapterActivity.setUniqueId(adapterComponent.getUniqueId());
-          applyComponents(adapterActivity, interlokComponent, activity);
-          getAdapters().put(adapterActivity.getUniqueId(), adapterActivity);
-        } else {
-          applyComponents(storedAdapterActivity, interlokComponent, activity);
-        }
+    } catch (Throwable ex) {
+      ex.printStackTrace();
+    }
+    if (adapterComponent != null) {
+      AdapterActivity storedAdapterActivity = getAdapters().get(adapterComponent.getUniqueId());
+      if (storedAdapterActivity == null) {
+        AdapterActivity adapterActivity = new AdapterActivity();
+        adapterActivity.setUniqueId(adapterComponent.getUniqueId());
+        applyComponents(adapterActivity, interlokComponent, activity);
+        getAdapters().put(adapterActivity.getUniqueId(), adapterActivity);
+      } else {
+        applyComponents(storedAdapterActivity, interlokComponent, activity);
       }
+    } else {
+      log.debug("AdapterComponent parent is null for {}", interlokComponent.getUniqueId());
     }
   }
 
   private void applyComponents(AdapterActivity adapterActivity, InterlokComponent interlokComponent, ProcessStep step) {
-    if (interlokComponent.getComponentType().equals(ComponentType.Service)) {
-      InterlokComponent channelComponent = interlokComponent.getParent().getParent();
-      ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
-      if (channelActivity == null) {
-        channelActivity = buildChannelActivity(channelComponent, adapterActivity);
-        adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
+    if (interlokComponent.getComponentType().equals(ComponentType.Service)
+        || interlokComponent.getComponentType().equals(ComponentType.ServiceList)) {
+
+      ChannelActivity channelActivity = getOrBuildChannelActivity(adapterActivity, interlokComponent);
+      WorkflowActivity workflowActivity = getOrBuildWorkflowActivity(channelActivity, interlokComponent, step);
+
+      ServiceContainerActivity parentActivity = null;
+
+      InterlokComponent parentComponent = interlokComponent.getParent();
+      if (parentComponent.getComponentType().equals(ComponentType.ServiceList)) {
+        parentActivity = getOrBuildParentServiceActivity(workflowActivity, interlokComponent, step);
+      } else {
+        parentActivity = workflowActivity;
       }
 
-      InterlokComponent workflowComponent = interlokComponent.getParent();
-      WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
-      if (workflowActivity == null) {
-        workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
-        channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
-      }
-      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
-        workflowActivity.addMessageId(step.getMessageId());
-      }
+      if (parentActivity == null) {
+        // XXX Can we have a null parentActivity? What about shared services?
+        log.trace("{} has a null parent", interlokComponent.getUniqueId());
+      } else {
+        ServiceActivity serviceActivity = parentActivity.getServices().get(interlokComponent.getUniqueId());
+        if (serviceActivity == null) {
+          if (interlokComponent.getComponentType().equals(ComponentType.ServiceList)) {
+            serviceActivity = buildServiceListActivity(interlokComponent, parentActivity);
+          } else {
+            serviceActivity = buildServiceActivity(interlokComponent, parentActivity);
+          }
+          parentActivity.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+        }
 
-      InterlokComponent serviceComponent = interlokComponent;
-      ServiceActivity serviceActivity = workflowActivity.getServices().get(serviceComponent.getUniqueId());
-      if (serviceActivity == null) {
-        serviceActivity = buildServiceActivity(serviceComponent, workflowActivity);
-        workflowActivity.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+        serviceActivity.addMessageId(step.getMessageId(), step.getTimeTakenMs());
+        serviceActivity.setMessageCount(serviceActivity.getMessageCount() + 1);
+        // serviceActivity.setClassName(step.getStepName());
+
+        long avgMsTaken = calculateAvgMsTaken(serviceActivity.getMsTaken());
+        serviceActivity.setAvgMsTaken(avgMsTaken);
       }
-
-      serviceActivity.addMessageId(step.getMessageId(), step.getTimeTakenMs());
-      serviceActivity.setMessageCount(serviceActivity.getMessageCount() + 1);
-      // serviceActivity.setClassName(step.getStepName());
-
-      long avgMsTaken = calculateAvgMsTaken(serviceActivity.getMsTaken());
-      serviceActivity.setAvgMsTaken(avgMsTaken);
 
     } else if (interlokComponent.getComponentType().equals(ComponentType.Producer)) {
-      InterlokComponent channelComponent = interlokComponent.getParent().getParent();
-      ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
-      if (channelActivity == null) {
-        channelActivity = buildChannelActivity(channelComponent, adapterActivity);
-        adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
-      }
-
-      InterlokComponent workflowComponent = interlokComponent.getParent();
-      WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
-      if (workflowActivity == null) {
-        workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
-        channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
-      }
-      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
-        workflowActivity.addMessageId(step.getMessageId());
-      }
+      ChannelActivity channelActivity = getOrBuildChannelActivity(adapterActivity, interlokComponent);
+      WorkflowActivity workflowActivity = getOrBuildWorkflowActivity(channelActivity, interlokComponent, step);
 
       ProducerActivity producerActivity = workflowActivity.getProducerActivity();
       if (producerActivity == null) {
@@ -120,22 +109,8 @@ public class ActivityMap implements Serializable {
       producerActivity.setAvgMsTaken(avgMsTaken);
 
     } else if (interlokComponent.getComponentType().equals(ComponentType.Consumer)) {
-      InterlokComponent channelComponent = interlokComponent.getParent().getParent();
-      ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
-      if (channelActivity == null) {
-        channelActivity = buildChannelActivity(channelComponent, adapterActivity);
-        adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
-      }
-
-      InterlokComponent workflowComponent = interlokComponent.getParent();
-      WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
-      if (workflowActivity == null) {
-        workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
-        channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
-      }
-      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
-        workflowActivity.addMessageId(step.getMessageId());
-      }
+      ChannelActivity channelActivity = getOrBuildChannelActivity(adapterActivity, interlokComponent);
+      WorkflowActivity workflowActivity = getOrBuildWorkflowActivity(channelActivity, interlokComponent, step);
 
       ConsumerActivity consumerActivity = workflowActivity.getConsumerActivity();
       if (consumerActivity == null) {
@@ -150,6 +125,73 @@ public class ActivityMap implements Serializable {
       consumerActivity.setAvgMsTaken(avgMsTaken);
 
     }
+  }
+
+  private ChannelActivity getOrBuildChannelActivity(AdapterActivity adapterActivity, InterlokComponent interlokComponent) {
+    InterlokComponent channelComponent = findChannelParent(interlokComponent);
+    if (channelComponent != null) {
+      ChannelActivity channelActivity = adapterActivity.getChannels().get(channelComponent.getUniqueId());
+      if (channelActivity == null) {
+        channelActivity = buildChannelActivity(channelComponent, adapterActivity);
+        adapterActivity.getChannels().put(channelActivity.getUniqueId(), channelActivity);
+      }
+      return channelActivity;
+    }
+    return null;
+  }
+
+  private WorkflowActivity getOrBuildWorkflowActivity(ChannelActivity channelActivity, InterlokComponent interlokComponent, ProcessStep step) {
+    InterlokComponent workflowComponent = findWorkflowParent(interlokComponent);
+    if (workflowComponent != null) {
+      WorkflowActivity workflowActivity = channelActivity.getWorkflows().get(workflowComponent.getUniqueId());
+      if (workflowActivity == null) {
+        workflowActivity = buildWorkflowActivity(workflowComponent, channelActivity);
+        channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
+      }
+      if (!workflowActivity.getMessageIds().contains(step.getMessageId())) {
+        workflowActivity.addMessageId(step.getMessageId());
+      }
+      return workflowActivity;
+    }
+    return null;
+  }
+
+  private ServiceContainerActivity getOrBuildParentServiceActivity(WorkflowActivity workflowActivity, InterlokComponent interlokComponent,
+      ProcessStep step) {
+    InterlokComponent parent = interlokComponent.getParent();
+    List<InterlokComponent> parents = new ArrayList<>();
+    while (parent != null && parent.getComponentType().equals(ComponentType.ServiceList)) {
+      parents.add(parent);
+      parent = parent.getParent();
+    }
+
+    Collections.reverse(parents);
+
+    ServiceContainerActivity parentActivity = null;
+    for (InterlokComponent parentComponent : parents) {
+      ServiceActivity serviceActivity = null;
+
+      if (parentComponent.getParent().getComponentType().equals(ComponentType.Workflow)) {
+        // Top of the list we attach it to the workflow
+        serviceActivity = workflowActivity.getServices().get(parentComponent.getUniqueId());
+        if (serviceActivity == null) {
+          serviceActivity = buildServiceListActivity(parentComponent, workflowActivity);
+          workflowActivity.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+        }
+      } else if (parentActivity != null) {
+        serviceActivity = parentActivity.getServices().get(parentComponent.getUniqueId());
+        if (serviceActivity == null) {
+          serviceActivity = buildServiceListActivity(parentComponent, parentActivity);
+          parentActivity.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+        }
+      }
+
+      if (serviceActivity instanceof ServiceContainerActivity) {
+        parentActivity = (ServiceListActivity) serviceActivity;
+      }
+    }
+
+    return parentActivity;
   }
 
   private ChannelActivity buildChannelActivity(InterlokComponent channelComponent, AdapterActivity adapterActivity) {
@@ -186,12 +228,40 @@ public class ActivityMap implements Serializable {
     return producerActivity;
   }
 
-  private ServiceActivity buildServiceActivity(InterlokComponent serviceComponent, WorkflowActivity workflowActivity) {
+  private ServiceActivity buildServiceActivity(InterlokComponent serviceComponent, ServiceContainerActivity parentActivity) {
     ServiceActivity serviceActivity = new ServiceActivity();
     serviceActivity.setUniqueId(serviceComponent.getUniqueId());
-    serviceActivity.setParent(workflowActivity);
+    serviceActivity.setParent(parentActivity);
     serviceActivity.setClassName(serviceComponent.getClassName());
     return serviceActivity;
+  }
+
+  private ServiceActivity buildServiceListActivity(InterlokComponent serviceComponent, ServiceContainerActivity parentActivity) {
+    ServiceListActivity serviceListActivity = new ServiceListActivity();
+    serviceListActivity.setUniqueId(serviceComponent.getUniqueId());
+    serviceListActivity.setParent(parentActivity);
+    serviceListActivity.setClassName(serviceComponent.getClassName());
+    return serviceListActivity;
+  }
+
+  private InterlokComponent findAdapterParent(InterlokComponent interlokComponent) {
+    return findParentOfType(interlokComponent, ComponentType.Adapter);
+  }
+
+  private InterlokComponent findChannelParent(InterlokComponent interlokComponent) {
+    return findParentOfType(interlokComponent, ComponentType.Channel);
+  }
+
+  private InterlokComponent findWorkflowParent(InterlokComponent interlokComponent) {
+    return findParentOfType(interlokComponent, ComponentType.Workflow);
+  }
+
+  private InterlokComponent findParentOfType(InterlokComponent interlokComponent, ComponentType componentType) {
+    InterlokComponent parent = interlokComponent;
+    do {
+      parent = parent.getParent();
+    } while (parent != null && !parent.getComponentType().equals(componentType));
+    return parent;
   }
 
   private long calculateAvgMsTaken(List<Long> msTakens) {

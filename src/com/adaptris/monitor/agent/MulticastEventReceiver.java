@@ -9,37 +9,42 @@ import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.adaptris.monitor.agent.activity.ActivityMap;
 
 
 public class MulticastEventReceiver {
-  
+
+  private transient Logger log = LoggerFactory.getLogger(this.getClass());
+
   private static final String DEFAULT_MULTICAST_GROUP = "224.0.0.4";
-  
+
   private static final int DEFAULT_MULTICAST_PORT = 5577;
 
   protected static final int STANDARD_PACKET_SIZE = 120400;
-  
+
   private List<EventReceiverListener> listeners;
-  
+
   private volatile boolean isRunning;
 
   private MulticastSocket socket;
-  
+
   public MulticastEventReceiver() {
     listeners = new ArrayList<>();
   }
-  
+
   public void start() {
     isRunning = true;
-    
+
     try {
       socketConnect();
     } catch (Exception ex) {
       ex.printStackTrace();
     }
     new Thread(new Runnable() {
-      
+
       final byte[] udpPacket = new byte[STANDARD_PACKET_SIZE];
       @Override
       public void run() {
@@ -47,26 +52,28 @@ public class MulticastEventReceiver {
           try {
             final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
             socket.receive(packet);
-                        
+
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             ActivityMap activityMap = (ActivityMap) iStream.readObject();
-            
-            for(EventReceiverListener listener : getListeners())
+
+            for(EventReceiverListener listener : getListeners()) {
               listener.eventReceived(activityMap);
-            
-            System.out.println(activityMap);
-            
-          } catch (Exception ex) {
-            ex.printStackTrace();
+            }
+
+            log.trace("Activity Map: \n{}", activityMap);
+
+          } catch (Exception exc) {
+            exc.printStackTrace();
           }
         }
-        
-        if(socket != null)
+
+        if(socket != null) {
           socket.close();
+        }
       }
     }, "Event Receiver Thread").start();
   }
-  
+
   public void stop() {
     isRunning = false;
   }
@@ -77,11 +84,11 @@ public class MulticastEventReceiver {
     socket.setSoTimeout(300000);
     socket.joinGroup(InetAddress.getByName(DEFAULT_MULTICAST_GROUP));
   }
-  
+
   public void addEventReceiverListener(EventReceiverListener eventReceiverListener) {
-    this.getListeners().add(eventReceiverListener);
+    getListeners().add(eventReceiverListener);
   }
-  
+
   public List<EventReceiverListener> getListeners() {
     return listeners;
   }

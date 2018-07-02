@@ -1,6 +1,6 @@
 package com.adaptris.monitor.agent.activity;
 
-public class EndpointActivity extends BaseFlowActivity {
+public abstract class EndpointActivity extends BaseFlowActivity {
 
   private static final long serialVersionUID = -6179345792118668407L;
 
@@ -8,6 +8,8 @@ public class EndpointActivity extends BaseFlowActivity {
   private String destination;
 
   private String vendorImpClass;
+
+  private WorkflowActivity parent;
 
   public String getDestination() {
     return destination;
@@ -23,6 +25,23 @@ public class EndpointActivity extends BaseFlowActivity {
 
   public void setVendorImpClass(String vendorImpClass) {
     this.vendorImpClass = vendorImpClass;
+  }
+
+  @Override
+  public WorkflowActivity getParent() {
+    return parent;
+  }
+
+  public void setParent(WorkflowActivity parent) {
+    this.parent = parent;
+  }
+
+  public ChannelActivity getGrandParent() {
+    return getParent() == null ? null : getParent().getParent();
+  }
+
+  public AdapterActivity getGreatGrandParent() {
+    return getGrandParent() == null ? null : getGrandParent().getParent();
   }
 
 }

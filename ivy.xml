@@ -22,6 +22,7 @@
      <artifact name="interlok-monitor-agent" type="pom" ext="pom"/>
      <artifact name="interlok-monitor-agent-javadoc" type="javadoc" ext="zip" conf="javadoc"/>
      <artifact type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
+     <artifact type="source" ext="jar" conf="sources" m:classifier="sources"/>
   </publications>
   <dependencies>
     <dependency org="com.adaptris" name="adp-core" rev="${adp-core-version}" conf="compile->default" changing="true"/>
