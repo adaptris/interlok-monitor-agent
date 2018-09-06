@@ -13,7 +13,7 @@ public class ActivityMap implements Serializable {
 
   private static final long serialVersionUID = 2523877428476982945L;
 
-  private Map<String, AdapterActivity> adapters;
+  private Map<String, BaseActivity> adapters;
 
   public ActivityMap() {
     adapters = new HashMap<>();
@@ -201,18 +201,18 @@ public class ActivityMap implements Serializable {
     return totalTaken / msTakens.size();
   }
 
-  public Map<String, AdapterActivity> getAdapters() {
+  public Map<String, BaseActivity> getAdapters() {
     return adapters;
   }
 
-  public void setAdapters(Map<String, AdapterActivity> adapters) {
+  public void setAdapters(Map<String, BaseActivity> adapters) {
     this.adapters = adapters;
   }
 
   @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
-    for(AdapterActivity adapter : getAdapters().values()) {
+    for(BaseActivity adapter : getAdapters().values()) {
       buffer.append(adapter.toString());
     }
     return buffer.toString();
