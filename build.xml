@@ -32,7 +32,7 @@
 
     <property name="javac.include.classes"  value="**/*.java" />
     <property name="junit.test.classes"     value="**/*Test*.java" />
-    <property name="javac.target.version"   value="1.7"/>
+    <property name="javac.target.version"   value="1.8"/>
     <patternset id="javac.exclude.sources">
     </patternset>
 
