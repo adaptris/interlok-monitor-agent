@@ -11,7 +11,11 @@ import java.util.List;
 
 import com.adaptris.monitor.agent.activity.ActivityMap;
 
-
+/**
+ * Instantiate an instance of this class, register your custom listener and execute the start method to begin receiving event data.
+ * @author aaron
+ *
+ */
 public class MulticastEventReceiver {
   
   private static final String DEFAULT_MULTICAST_GROUP = "224.0.0.4";
