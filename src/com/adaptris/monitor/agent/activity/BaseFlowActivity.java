@@ -10,19 +10,32 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
 
   private String className;
 
-  private WorkflowActivity parent;
-
-  private List<String> messageIds;
-
-  private List<Long> msTaken;
+  private transient List<Long> msTaken;
 
   private int messageCount;
 
   private long avgMsTaken;
 
   public BaseFlowActivity() {
-    messageIds = new ArrayList<>();
     msTaken = new ArrayList<>();
+  }
+  
+  protected long calculateAvgTimeTaken() {
+    long totalTimeTaken = 0;
+    for(long timeTaken : this.getMsTaken())
+      totalTimeTaken += timeTaken;
+    
+    if(totalTimeTaken > 0)
+      return totalTimeTaken / this.getMsTaken().size();
+    else
+      return 0;
+  }
+  
+  @Override
+  public void resetActivity() {
+    this.setAvgMsTaken(0);
+    this.setMessageCount(0);
+    this.setMsTaken(new ArrayList<>());
   }
 
   public String getClassName() {
@@ -33,24 +46,7 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
     this.className = className;
   }
 
-  public WorkflowActivity getParent() {
-    return parent;
-  }
-
-  public void setParent(WorkflowActivity parent) {
-    this.parent = parent;
-  }
-
-  public List<String> getMessageIds() {
-    return messageIds;
-  }
-
-  public void setMessageIds(List<String> messageIds) {
-    this.messageIds = messageIds;
-  }
-
   public void addMessageId(String messageId, long timeTaken) {
-    getMessageIds().add(messageId);
     getMsTaken().add(timeTaken);
   }
 
@@ -76,14 +72,6 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
 
   public void setAvgMsTaken(long avgMsTaken) {
     this.avgMsTaken = avgMsTaken;
-  }
-
-  public ChannelActivity getGrandParent() {
-    return getParent() == null ? null : getParent().getParent();
-  }
-
-  public AdapterActivity getGreatGrandParent() {
-    return getGrandParent() == null ? null : getGrandParent().getParent();
   }
 
 }

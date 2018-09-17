@@ -1,23 +1,47 @@
 package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.adaptris.profiler.ProcessStep;
 
 public class ServiceActivity extends BaseFlowActivity implements Serializable {
 
   private static final long serialVersionUID = 5440965750057494954L;
+  
+  private Map<String, ServiceActivity> services;
+  
+  public ServiceActivity() {
+    services = new LinkedHashMap<>();
+  }
+  
+  @Override
+  public void addActivity(ProcessStep processStep) {
+    if(processStep.getStepInstanceId().equals(this.getUniqueId())) {
+      this.getMsTaken().add(processStep.getTimeTakenMs());
+      this.setAvgMsTaken(super.calculateAvgTimeTaken());
+      this.setMessageCount(this.getMessageCount() + 1);
+    } else {
+      for(String serviceId : this.getServices().keySet()) {
+        if(processStep.getStepInstanceId().equals(serviceId))
+          this.getServices().get(serviceId).addActivity(processStep);
+      }
+    }
+  }
+
+  public Map<String, ServiceActivity> getServices() {
+    return services;
+  }
+
+  public void setServices(Map<String, ServiceActivity> services) {
+    this.services = services;
+  }
 
   @Override
   public boolean equals(Object object) {
     if (object instanceof ServiceActivity) {
-      if (((ServiceActivity) object).getUniqueId().equals(getUniqueId())) {
-        if (((ServiceActivity) object).getParent().getUniqueId().equals(getParent().getUniqueId())) {
-          if (((ServiceActivity) object).getGrandParent().getUniqueId().equals(getGrandParent().getUniqueId())) {
-            if (((ServiceActivity) object).getGreatGrandParent().getUniqueId().equals(getGreatGrandParent().getUniqueId())) {
-              return true;
-            }
-          }
-        }
-      }
+      return ((ServiceActivity) object).getUniqueId().equals(this.getUniqueId());
     }
     return false;
   }
@@ -27,30 +51,31 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
     final int prime = 31;
     int result = 1;
     result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
-    if (getParent() != null) {
-      result = prime * result + (getParent().getUniqueId() == null ? 0 : getParent().getUniqueId().hashCode());
-      if (getGrandParent() != null) {
-        result = prime * result + (getGrandParent().getUniqueId() == null ? 0 : getGrandParent().getUniqueId().hashCode());
-        if (getGreatGrandParent() != null) {
-          result = prime * result + (getGreatGrandParent().getUniqueId() == null ? 0 : getGreatGrandParent().getUniqueId().hashCode());
-        }
-      }
-    }
     return result;
   }
 
   @Override
   public String toString() {
+    return this.toString(3);
+  }
+  
+  public String toString(int indent) {
     StringBuffer buffer = new StringBuffer();
-    buffer.append("\t\t\tService = ");
+    for(int indentIndex = 0; indentIndex < indent; indentIndex ++)
+      buffer.append("\t");
+    buffer.append("Service = ");
     buffer.append(getUniqueId());
     buffer.append(" (");
     buffer.append(getMessageCount());
     buffer.append(" at ");
     buffer.append(getAvgMsTaken());
-    buffer.append("  ms");
+    buffer.append("  nanos (" + getAvgMsTaken() / 1000000 + " ms)");
     buffer.append(")");
     buffer.append("\n");
+    
+    for(ServiceActivity service : getServices().values()) {
+      buffer.append(service.toString(indent + 1));
+    }
 
     return buffer.toString();
   }

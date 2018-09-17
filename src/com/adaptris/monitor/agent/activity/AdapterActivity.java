@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.adaptris.profiler.ProcessStep;
+
 public class AdapterActivity extends BaseActivity implements Serializable {
 
   private static final long serialVersionUID = -4031508025636325352L;
@@ -12,6 +14,20 @@ public class AdapterActivity extends BaseActivity implements Serializable {
 
   public AdapterActivity() {
     channels = new LinkedHashMap<>();
+  }
+  
+  @Override
+  public void addActivity(ProcessStep processStep) {
+    for(String channelId : this.getChannels().keySet()) {
+      this.getChannels().get(channelId).addActivity(processStep);
+    }
+  }
+
+  @Override
+  public void resetActivity() {
+    for(String channelId : this.getChannels().keySet()) {
+      this.getChannels().get(channelId).resetActivity();
+    }
   }
 
   public void addChannelActivity(ChannelActivity channelActivity) {
@@ -56,4 +72,5 @@ public class AdapterActivity extends BaseActivity implements Serializable {
 
     return buffer.toString();
   }
+
 }

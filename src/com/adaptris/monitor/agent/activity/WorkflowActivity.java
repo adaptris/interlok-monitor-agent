@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.adaptris.profiler.ProcessStep;
+
 public class WorkflowActivity extends BaseActivity implements Serializable {
 
   private static final long serialVersionUID = -1630350826201321890L;
@@ -23,6 +25,28 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
   public WorkflowActivity() {
     services = new LinkedHashMap<>();
     messageIds = new ArrayList<>();
+  }
+  
+  @Override
+  public void addActivity(ProcessStep processStep) {
+    if(processStep.getStepInstanceId().equals(this.getConsumerActivity().getUniqueId()))
+      this.getConsumerActivity().addActivity(processStep);
+    else if(processStep.getStepInstanceId().equals(this.getProducerActivity().getUniqueId()))
+      this.getProducerActivity().addActivity(processStep);
+    else {
+      for(String serviceId : this.getServices().keySet()) {
+        this.getServices().get(serviceId).addActivity(processStep);
+      }
+    }
+  }
+
+  @Override
+  public void resetActivity() {
+    for(String serviceId : this.getServices().keySet()) {
+      this.getServices().get(serviceId).resetActivity();
+    }
+    this.getConsumerActivity().resetActivity();
+    this.getProducerActivity().resetActivity();
   }
 
   public void addServiceActivity(ServiceActivity serviceActivity) {
