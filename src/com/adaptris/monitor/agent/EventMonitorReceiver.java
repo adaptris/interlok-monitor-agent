@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.adaptris.monitor.agent.activity.ActivityMap;
+import com.adaptris.monitor.agent.jmx.JmxEventPropagator;
 import com.adaptris.profiler.ProcessStep;
 import com.adaptris.profiler.client.EventReceiver;
 
@@ -22,12 +23,12 @@ public final class EventMonitorReceiver implements EventReceiver {
 
   private ActivityMap adapterActivityMap;
     
-  private EventMonitorReceiver() {
+  private EventMonitorReceiver() throws Exception {
     unprocessedEvents = new ArrayList<>();
-    eventPropagator = new MulticastEventPropagator(this);
+    eventPropagator = new JmxEventPropagator(this);
   }
   
-  public static EventMonitorReceiver getInstance() {
+  public static EventMonitorReceiver getInstance() throws Exception {
     if(INSTANCE == null) {
       INSTANCE = new EventMonitorReceiver();
       

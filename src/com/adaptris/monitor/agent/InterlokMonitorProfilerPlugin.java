@@ -30,7 +30,11 @@ public class InterlokMonitorProfilerPlugin implements ClientPlugin {
   public void start(Object object) {
     if(object instanceof Adapter) {
       ActivityMap createBaseMap = activityMapCreator.createBaseMap(object);
-      EventMonitorReceiver.getInstance().setAdapterActivityMap(createBaseMap);
+      try {
+        EventMonitorReceiver.getInstance().setAdapterActivityMap(createBaseMap);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -41,7 +45,11 @@ public class InterlokMonitorProfilerPlugin implements ClientPlugin {
   @Override
   public List<EventReceiver> getReceivers() {
       final List<EventReceiver> eventReceivers = new ArrayList<EventReceiver>();
-      eventReceivers.add(EventMonitorReceiver.getInstance());
+      try {
+        eventReceivers.add(EventMonitorReceiver.getInstance());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       return eventReceivers;
   }
 }
