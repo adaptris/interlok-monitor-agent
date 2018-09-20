@@ -1,4 +1,4 @@
-package com.adaptris.monitor.agent;
+package com.adaptris.monitor.agent.multicast;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.adaptris.monitor.agent.EventReceiverListener;
 import com.adaptris.monitor.agent.activity.ActivityMap;
 
 /**
