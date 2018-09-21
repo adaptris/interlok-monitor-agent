@@ -6,6 +6,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+import com.adaptris.core.runtime.AdapterComponentMBean;
 import com.adaptris.core.util.JmxHelper;
 import com.adaptris.monitor.agent.AbstractEventPropagator;
 import com.adaptris.monitor.agent.EventMonitorReceiver;
@@ -13,18 +14,18 @@ import com.adaptris.monitor.agent.activity.ActivityMap;
 
 public class JmxEventPropagator extends AbstractEventPropagator {
   
-  private ProfilerEventMBean eventMBean;
+  private ProfilerEventClient eventMBean;
   
   private static ObjectName mbeanName;
   
   public JmxEventPropagator(EventMonitorReceiver eventMonitorReceiver) throws Exception {
     super(eventMonitorReceiver);
-    eventMBean = new ProfilerEventMBean();
-    mbeanName = new ObjectName("com.adaptris.profiler.events");
+    eventMBean = new ProfilerEventClient();
+    mbeanName = new ObjectName(AdapterComponentMBean.JMX_DOMAIN_NAME + ":type=Profiler");
     this.registerMBean(eventMBean);
   }
 
-  private void registerMBean(ProfilerEventMBean eventMBean2) throws MBeanRegistrationException, InstanceNotFoundException, InstanceAlreadyExistsException, NotCompliantMBeanException {
+  private void registerMBean(ProfilerEventClient eventMBean2) throws MBeanRegistrationException, InstanceNotFoundException, InstanceAlreadyExistsException, NotCompliantMBeanException {
     JmxHelper.register(mbeanName, eventMBean);
   }
 
@@ -36,7 +37,7 @@ public class JmxEventPropagator extends AbstractEventPropagator {
   }
 
   private void sendJmx(ActivityMap activityMap) {
-    this.eventMBean.addEventMap(activityMap);
+    this.eventMBean.addEventActivityMap(activityMap);
   }
 
 }
