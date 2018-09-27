@@ -13,8 +13,8 @@
     <property name="ivy.publish.revision" value="3.7-SNAPSHOT"/>  <!-- Version number of this artifact -->
     <property name="adp-core-version" value="3.7-SNAPSHOT"/>
     <property name="manifest.title" value="Interlok/Monitor"/>
-    <property name="src.dir" value="${basedir}/src"/>
-    <property name="testsrc.dir" value="${basedir}/test/src"/>
+    <property name="src.dir" value="${basedir}/src/main/java"/>
+    <property name="testsrc.dir" value="${basedir}/src/main/test"/>
     <property name="build-util.lib.dir"     value="${basedir}/../build-util"/>
 
     <property name="build.dir" value="${basedir}/build"/>
