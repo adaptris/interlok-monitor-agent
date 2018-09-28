@@ -31,6 +31,9 @@ public class MulticastEventPropagator extends AbstractEventPropagator {
 
   private void sendMulticast(Object object) {
     try {
+      if((socket == null) || (!socket.isConnected()))
+          this.initialiseSocket();
+      
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(baos);
       oos.writeObject(object);
@@ -40,9 +43,20 @@ public class MulticastEventPropagator extends AbstractEventPropagator {
       DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(DEFAULT_MULTICAST_GROUP), DEFAULT_MULTICAST_PORT);
       socket.send(packet);
     } catch (Exception ex) {
-      ex.printStackTrace();
+      log.error("Error sending multicast profiling events.", ex);
     } finally {
     }
+  }
+  
+  private void initialiseSocket() {
+    try {
+      this.socket = new MulticastSocket(DEFAULT_MULTICAST_PORT);
+      this.socket.joinGroup(InetAddress.getByName(DEFAULT_MULTICAST_GROUP));
+      socket.setTimeToLive((byte) 1);
+    } catch (Exception ex) {
+      log.error("Could not initialise multicast socket.", ex);
+    }
+    
   }
 
 }
