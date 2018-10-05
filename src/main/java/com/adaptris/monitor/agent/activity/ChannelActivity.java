@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.adaptris.profiler.ProcessStep;
+
 public class ChannelActivity extends BaseActivity implements Activity, Serializable {
 
   private static final long serialVersionUID = 1922768482203698311L;
@@ -14,6 +16,20 @@ public class ChannelActivity extends BaseActivity implements Activity, Serializa
 
   public ChannelActivity() {
     workflows = new LinkedHashMap<>();
+  }
+  
+  @Override
+  public void addActivity(ProcessStep processStep) {
+    for(String workflowId : this.getWorkflows().keySet()) {
+      this.getWorkflows().get(workflowId).addActivity(processStep);
+    }
+  }
+
+  @Override
+  public void resetActivity() {
+    for(String workflowId : this.getWorkflows().keySet()) {
+      this.getWorkflows().get(workflowId).resetActivity();
+    }
   }
 
   public void addWorkflow(WorkflowActivity workflowActivity) {
@@ -72,4 +88,5 @@ public class ChannelActivity extends BaseActivity implements Activity, Serializa
 
     return buffer.toString();
   }
+
 }

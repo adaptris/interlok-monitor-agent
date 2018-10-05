@@ -12,6 +12,7 @@ build.properties
 *.iml
 *.iws
 *.class
+*.gradle
 
 # Project artefacts from building.
 cobertura.ser

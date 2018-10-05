@@ -2,6 +2,8 @@ package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
 
+import com.adaptris.profiler.ProcessStep;
+
 public abstract class BaseActivity implements Activity, Serializable {
 
   private static final long serialVersionUID = -412188093332029556L;
@@ -11,6 +13,10 @@ public abstract class BaseActivity implements Activity, Serializable {
   public BaseActivity() {
 
   }
+
+  public abstract void addActivity(ProcessStep processStep);
+
+  public abstract void resetActivity();
 
   @Override
   public String getUniqueId() {

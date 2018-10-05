@@ -16,16 +16,6 @@ ext {
   slf4jVersion = '1.7.25'
 }
 
-ext.hasGraphViz = { ->
-  def app = "dot"
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    app = app + ".exe"
-  }
-  return System.getenv("PATH").split(File.pathSeparator).any{
-    java.nio.file.Paths.get("${it}").resolve(app).toFile().exists()
-  }
-}
-
 if (JavaVersion.current().isJava8Compatible()) {
   allprojects {
     tasks.withType(Javadoc) {
@@ -51,6 +41,13 @@ repositories {
   maven { url "https://development.adaptris.net/nexus/content/groups/public" }
   maven { url "https://development.adaptris.net/nexus/content/repositories/snapshots" }
   maven { url "https://development.adaptris.net/nexus/content/repositories/releases" }
+  maven {
+      credentials {
+        username repoUsername
+        password repoPassword
+      }
+      url "https://development.adaptris.net/nexus/content/groups/private"
+    }
 }
 
 
@@ -61,6 +58,11 @@ configurations {
   all*.exclude group: 'commons-logging'
   all*.exclude group: 'javamail'
   all*.exclude group: 'javax.mail', module: 'mail'
+  all*.exclude group: 'org.glassfish.hk2.external'
+  all*.exclude group: 'xalan', module: 'xalan'
+  all*.exclude group: 'net.sf.saxon', module: 'saxon'
+  all*.exclude group: 'org.codehaus.woodstox'
+  all*.exclude group: 'org.eclipse.jetty.orbit', module: 'javax.mail.glassfish'
 }
 
 configurations.all {
@@ -70,18 +72,17 @@ configurations.all {
 dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
-  compile ("com.adaptris:interlok-core-apt:$interlokCoreVersion") { changing= true}
-  compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("com.adaptris:interlok-licensing:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-profiler:$interlokCoreVersion") { changing= true}
-  compile ("org.apache.velocity:velocity:1.7")
-
+  
+  compile ("org.apache.commons:commons-collections4:4.2")
+  
+  compile ("org.slf4j:slf4j-api:$slf4jVersion")
+  
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.0.16")
 
-  testCompile ("com.adaptris:interlok-stub:$interlokCoreVersion") { changing= true}
-  testCompile ("com.adaptris:interlok-licensing-stub:$interlokCoreVersion") { changing= true}
   testCompile ('junit:junit:4.12')
+  testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
   testCompile ('org.mockito:mockito-all:1.9.5')
   testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true }
   testCompile ("org.apache.logging.log4j:log4j-core:2.8.1")
@@ -90,7 +91,6 @@ dependencies {
   testCompile ("org.apache.logging.log4j:log4j-api:2.8.1")
 
   javadoc("com.adaptris:interlok-core-apt:$interlokCoreVersion") { changing= true}
-
 }
 
 
@@ -134,6 +134,7 @@ javadoc {
       ]
     taglets = ["com.adaptris.taglet.ConfigTaglet", "com.adaptris.taglet.LicenseTaglet"]
     options.addStringOption "tagletpath", configurations.javadoc.asPath
+    title= componentName
   }
 }
 
@@ -147,6 +148,8 @@ jacocoTestReport {
         html.enabled true
     }
 }
+
+check.dependsOn jacocoTestReport
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
   classifier = 'javadoc'
@@ -221,7 +224,7 @@ publishing {
 
       pom.withXml {
         asNode().appendNode("name", componentName)
-        asNode().appendNode("description", "Profile Interlok and send data to the UI.")
+        asNode().appendNode("description", "Expose profiling data via Multicast and JMX from the Interlok-Profiler.")
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.8.0+")
         properties.appendNode("tags", "monitor,profiling")

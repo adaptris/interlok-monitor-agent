@@ -8,14 +8,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.adaptris.core.Adapter;
-import com.adaptris.core.AdaptrisComponent;
-import com.adaptris.monitor.agent.message.AdapterStructure;
-import com.adaptris.monitor.agent.message.ComponentEvent;
+import com.adaptris.monitor.agent.activity.ActivityMap;
 import com.adaptris.profiler.ProcessStep;
+import com.adaptris.profiler.ProfilerSettings;
 import com.adaptris.profiler.client.EventReceiver;
 
-public final class EventMonitorReceiver implements EventReceiver, LifecycleEventReceiver {
+public final class EventMonitorReceiver implements EventReceiver {
+
+  private static final String EVENT_PROPAGATOR_KEY = "com.adaptris.monitor.agent.EventPropagator";
 
   private static EventMonitorReceiver INSTANCE;
 
@@ -23,19 +23,16 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
 
   private final List<ProcessStep> unprocessedEvents;
 
-  private final List<ComponentEvent> unprocessedLifecycleEvents;
-
   private final ReentrantLock unprocessedListLock = new ReentrantLock(false);
 
-  private final ReentrantLock unprocessedComponentEventLock = new ReentrantLock(false);
+  private ActivityMap adapterActivityMap;
 
-  private EventMonitorReceiver() {
+  private EventMonitorReceiver() throws Exception {
     unprocessedEvents = new ArrayList<>();
-    unprocessedLifecycleEvents = new ArrayList<>();
-    eventPropagator = new MulticastEventPropagator(this);
+    eventPropagator = ClientEventPropagatorCreator.getCreator(ProfilerSettings.getProperty(EVENT_PROPAGATOR_KEY)).createClientPropagator(this);
   }
 
-  public static EventMonitorReceiver getInstance() {
+  public static EventMonitorReceiver getInstance() throws Exception {
     if(INSTANCE == null) {
       INSTANCE = new EventMonitorReceiver();
 
@@ -66,99 +63,12 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
   public List<ProcessStep> getEvents() {
     unprocessedListLock.lock();
     try {
-      ArrayList<ProcessStep> returnedList = new ArrayList<ProcessStep>(unprocessedEvents);
+      ArrayList<ProcessStep> returnedList = new ArrayList<>(unprocessedEvents);
       Collections.sort(returnedList, new ProcessStepComparator());
       unprocessedEvents.clear();
       return returnedList;
     } finally {
       unprocessedListLock.unlock();
-    }
-  }
-
-  public List<ComponentEvent> getLifeCycleEvents() {
-    try {
-      unprocessedComponentEventLock.lock();
-      ArrayList<ComponentEvent> returnedList = new ArrayList<ComponentEvent>(unprocessedLifecycleEvents);
-      unprocessedEvents.clear();
-      return returnedList;
-    } finally {
-      unprocessedComponentEventLock.unlock();
-    }
-  }
-
-  @Override
-  public void startEventReceived(AdaptrisComponent component) {
-    if(component instanceof Adapter) {
-      ComponentEvent lifecycleEvent = buildLifecycleEvent(component, ComponentEvent.Event.START);
-      try {
-        unprocessedComponentEventLock.lock();
-        unprocessedLifecycleEvents.add(lifecycleEvent);
-      } finally {
-        unprocessedComponentEventLock.unlock();
-      }
-    }
-  }
-
-  @Override
-  public void initEventReceived(AdaptrisComponent component) {
-    if(component instanceof Adapter) {
-      ComponentEvent lifecycleEvent = buildLifecycleEvent(component, ComponentEvent.Event.INIT);
-      try {
-
-        unprocessedComponentEventLock.lock();
-        unprocessedLifecycleEvents.add(lifecycleEvent);
-      } finally {
-        unprocessedComponentEventLock.unlock();
-      }
-    }
-  }
-
-  @Override
-  public void stopEventReceived(AdaptrisComponent component) {
-    if(component instanceof Adapter) {
-      ComponentEvent lifecycleEvent = buildLifecycleEvent(component, ComponentEvent.Event.STOP);
-      try {
-        unprocessedComponentEventLock.lock();
-        unprocessedLifecycleEvents.add(lifecycleEvent);
-      } finally {
-        unprocessedComponentEventLock.unlock();
-      }
-    }
-  }
-
-  @Override
-  public void closeEventReceived(AdaptrisComponent component) {
-    if(component instanceof Adapter) {
-      ComponentEvent lifecycleEvent = buildLifecycleEvent(component, ComponentEvent.Event.CLOSE);
-      try {
-        unprocessedComponentEventLock.lock();
-        unprocessedLifecycleEvents.add(lifecycleEvent);
-      } finally {
-        unprocessedComponentEventLock.unlock();
-      }
-    }
-  }
-
-  private ComponentEvent buildLifecycleEvent(AdaptrisComponent component, ComponentEvent.Event lifecycleEvent) {
-    if(component instanceof Adapter) {
-      Adapter adapter = (Adapter) component;
-      AdapterStructure adapterStructure = new AdapterStructure();
-      adapterStructure.build(adapter);
-
-      ComponentEvent componentEvent = new ComponentEvent();
-      componentEvent.setEvent(lifecycleEvent);
-      componentEvent.setComponent(adapterStructure);
-
-      return componentEvent;
-    } else {
-      return null;
-    }
-  }
-
-  private static class ProcessStepComparator implements Comparator<ProcessStep> {
-    @Override
-    public int compare(ProcessStep ps1, ProcessStep ps2) {
-      return ps1.getOrder() < ps2.getOrder() ? -1 : ps1.getOrder() > ps2.getOrder() ? 1 : 0;
     }
   }
 
@@ -168,6 +78,21 @@ public final class EventMonitorReceiver implements EventReceiver, LifecycleEvent
 
   public void setEventPropagator(EventPropagator eventPropagator) {
     this.eventPropagator = eventPropagator;
+  }
+
+  public void setAdapterActivityMap(ActivityMap createBaseMap) {
+    adapterActivityMap = createBaseMap;
+  }
+
+  public ActivityMap getAdapterActivityMap() {
+    return adapterActivityMap;
+  }
+
+  private static class ProcessStepComparator implements Comparator<ProcessStep> {
+    @Override
+    public int compare(ProcessStep ps1, ProcessStep ps2) {
+      return ps1.getOrder() < ps2.getOrder() ? -1 : ps1.getOrder() > ps2.getOrder() ? 1 : 0;
+    }
   }
 
 }

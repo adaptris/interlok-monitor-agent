@@ -15,7 +15,6 @@ import com.adaptris.monitor.agent.activity.AdapterActivity;
 import com.adaptris.monitor.agent.activity.ChannelActivity;
 import com.adaptris.monitor.agent.activity.ServiceActivity;
 import com.adaptris.monitor.agent.activity.WorkflowActivity;
-import com.adaptris.monitor.agent.message.ComponentEvent;
 import com.adaptris.profiler.ProcessStep;
 
 public class MulticastEventPropagator implements EventPropagator {
@@ -77,7 +76,8 @@ public class MulticastEventPropagator implements EventPropagator {
 
   private void compactActivityMap(ActivityMap activityMap) {
     for (String adapterKey : activityMap.getAdapters().keySet()) {
-      AdapterActivity aa = activityMap.getAdapters().get(adapterKey);
+      // TODO We cast to AdapterActivity but is it right?
+      AdapterActivity aa = (AdapterActivity) activityMap.getAdapters().get(adapterKey);
       for (String channelKey : aa.getChannels().keySet()) {
         ChannelActivity ca = aa.getChannels().get(channelKey);
         for (String workflowKey : ca.getWorkflows().keySet()) {
@@ -123,13 +123,6 @@ public class MulticastEventPropagator implements EventPropagator {
     log.debug(activityMap.toString());
 
     sendMulticast(activityMap);
-  }
-
-
-  @Override
-  public void propagateLifecycleEvent(ComponentEvent componentEvent) {
-    // TODO Auto-generated method stub
-
   }
 
   private void sendMulticast(Object object) {

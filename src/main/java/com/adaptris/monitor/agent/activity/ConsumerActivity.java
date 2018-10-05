@@ -2,9 +2,20 @@ package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
 
+import com.adaptris.profiler.ProcessStep;
+
 public class ConsumerActivity extends EndpointActivity implements Serializable {
 
   private static final long serialVersionUID = 2243255282200998908L;
+
+  @Override
+  public void addActivity(ProcessStep processStep) {
+    if(processStep.getStepInstanceId().equals(this.getUniqueId())) {
+      this.getMsTaken().add(processStep.getTimeTakenMs());
+      this.setAvgMsTaken(super.calculateAvgTimeTaken());
+      this.setMessageCount(this.getMessageCount() + 1);
+    }
+  }
 
   @Override
   public boolean equals(Object object) {
