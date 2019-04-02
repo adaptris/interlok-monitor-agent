@@ -5,11 +5,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.adaptris.profiler.ProcessStep;
+import com.google.gson.annotations.Expose;
+import org.apache.commons.lang.StringUtils;
 
 public class ServiceActivity extends BaseFlowActivity implements Serializable {
 
   private static final long serialVersionUID = 5440965750057494954L;
-  
+
+  @Expose
   private Map<String, ServiceActivity> services;
   
   public ServiceActivity() {
@@ -18,7 +21,7 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
   
   @Override
   public void addActivity(ProcessStep processStep) {
-    if(processStep.getStepInstanceId().equals(this.getUniqueId())) {
+    if (StringUtils.equals(processStep.getStepInstanceId(), this.getUniqueId())) {
       this.getMsTaken().add(processStep.getTimeTakenMs());
       this.setAvgMsTaken(super.calculateAvgTimeTaken());
       this.setMessageCount(this.getMessageCount() + 1);

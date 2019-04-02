@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.adaptris.profiler.ProcessStep;
+import com.adaptris.profiler.StepType;
+import com.google.gson.annotations.Expose;
+import org.apache.commons.lang.StringUtils;
 
 public class WorkflowActivity extends BaseActivity implements Serializable {
 
@@ -14,10 +17,13 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
 
   private ChannelActivity parent;
 
+  @Expose
   private Map<String, ServiceActivity> services;
 
+  @Expose
   private ProducerActivity producerActivity;
 
+  @Expose
   private ConsumerActivity consumerActivity;
 
   private List<String> messageIds;
@@ -29,14 +35,22 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
   
   @Override
   public void addActivity(ProcessStep processStep) {
-    if(processStep.getStepInstanceId().equals(this.getConsumerActivity().getUniqueId()))
-      this.getConsumerActivity().addActivity(processStep);
-    else if(processStep.getStepInstanceId().equals(this.getProducerActivity().getUniqueId()))
-      this.getProducerActivity().addActivity(processStep);
-    else {
-      for(String serviceId : this.getServices().keySet()) {
-        this.getServices().get(serviceId).addActivity(processStep);
+    try {
+      String processStepID = processStep.getStepInstanceId();
+      if (StringUtils.equals(processStepID, this.getConsumerActivity().getUniqueId()) ||
+              processStep.getStepType() == StepType.CONSUMER) {
+        this.getConsumerActivity().addActivity(processStep);
+      } else if (StringUtils.equals(processStepID, this.getProducerActivity().getUniqueId()) ||
+              processStep.getStepType() == StepType.PRODUCER)
+        this.getProducerActivity().addActivity(processStep);
+      else {
+        for (String serviceId : this.getServices().keySet()) {
+          this.getServices().get(serviceId).addActivity(processStep);
+        }
       }
+    } catch(NullPointerException e) {
+      System.out.println(processStep);
+      throw e;
     }
   }
 

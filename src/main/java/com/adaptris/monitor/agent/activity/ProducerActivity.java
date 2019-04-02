@@ -3,6 +3,7 @@ package com.adaptris.monitor.agent.activity;
 import java.io.Serializable;
 
 import com.adaptris.profiler.ProcessStep;
+import org.apache.commons.lang.StringUtils;
 
 public class ProducerActivity extends BaseFlowActivity implements Serializable {
 
@@ -10,10 +11,13 @@ public class ProducerActivity extends BaseFlowActivity implements Serializable {
 
   @Override
   public void addActivity(ProcessStep processStep) {
-    if(processStep.getStepInstanceId().equals(this.getUniqueId())) {
+    if (StringUtils.equals(processStep.getStepInstanceId(), this.getUniqueId())) {
       this.getMsTaken().add(processStep.getTimeTakenMs());
       this.setAvgMsTaken(super.calculateAvgTimeTaken());
       this.setMessageCount(this.getMessageCount() + 1);
+    }
+    else {
+      System.err.println("Unknown producer event received");
     }
   }
 

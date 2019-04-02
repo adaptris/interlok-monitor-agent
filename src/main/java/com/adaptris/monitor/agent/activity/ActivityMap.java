@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.adaptris.profiler.ProcessStep;
+import com.google.gson.annotations.Expose;
 
 public class ActivityMap implements Serializable {
 
   private static final long serialVersionUID = 2523877428476982945L;
 
+  @Expose
   private Map<String, BaseActivity> adapters;
 
   public ActivityMap() {

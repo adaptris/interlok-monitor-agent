@@ -6,11 +6,25 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.adaptris.core.CoreException;
 import com.adaptris.monitor.agent.EventReceiverListener;
+import com.adaptris.monitor.agent.UDPProfilerConsumer;
 import com.adaptris.monitor.agent.activity.ActivityMap;
+import com.adaptris.monitor.agent.activity.ConsumerActivity;
+import com.adaptris.monitor.agent.activity.ProducerActivity;
+import com.adaptris.monitor.agent.json.ConsumerActivitySerializer;
+import com.adaptris.monitor.agent.json.EventJsonMarshaller;
+import com.adaptris.monitor.agent.json.ProducerActivitySerializer;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Instantiate an instance of this class, register your custom listener and execute the start method to begin receiving event data.
@@ -18,7 +32,9 @@ import com.adaptris.monitor.agent.activity.ActivityMap;
  *
  */
 public class MulticastEventReceiver {
-  
+
+  protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
+
   private static final String DEFAULT_MULTICAST_GROUP = "224.0.0.4";
   
   private static final int DEFAULT_MULTICAST_PORT = 5577;
@@ -50,17 +66,17 @@ public class MulticastEventReceiver {
       public void run() {
         while(isRunning) {
           try {
+            log.debug("Attempting to read packet");
             final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
             socket.receive(packet);
-                        
+            log.debug("packet read");
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             ActivityMap activityMap = (ActivityMap) iStream.readObject();
             
             for(EventReceiverListener listener : getListeners())
               listener.eventReceived(activityMap);
             
-            System.out.println(activityMap);
-            
+            log.debug("Activity map processed");
           } catch (Exception ex) {
             ex.printStackTrace();
           }
@@ -95,4 +111,14 @@ public class MulticastEventReceiver {
     this.listeners = listeners;
   }
 
+//  private static EventJsonMarshaller jsonMarshaller;
+
+
+  public static void main(String args[]) throws CoreException {
+    final EventJsonMarshaller jsonMarshaller = new EventJsonMarshaller();
+    System.out.println("Starting udp listener");
+    MulticastEventReceiver multicastEventReceiver = new MulticastEventReceiver();
+    multicastEventReceiver.start();
+    multicastEventReceiver.addEventReceiverListener(activityMap -> System.out.println(jsonMarshaller.marshallToJson(activityMap)));
+  }
 }
