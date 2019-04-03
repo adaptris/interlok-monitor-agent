@@ -5,11 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.adaptris.profiler.ProcessStep;
+import com.google.gson.annotations.Expose;
 
 public class AdapterActivity extends BaseActivity implements Serializable {
 
   private static final long serialVersionUID = -4031508025636325352L;
 
+  @Expose
   private Map<String, ChannelActivity> channels;
 
   public AdapterActivity() {

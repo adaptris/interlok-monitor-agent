@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.adaptris.profiler.ProcessStep;
+import com.google.gson.annotations.Expose;
 
 public class ChannelActivity extends BaseActivity implements Serializable {
 
@@ -12,6 +13,7 @@ public class ChannelActivity extends BaseActivity implements Serializable {
 
   private AdapterActivity parent;
 
+  @Expose
   private Map<String, WorkflowActivity> workflows;
 
   public ChannelActivity() {

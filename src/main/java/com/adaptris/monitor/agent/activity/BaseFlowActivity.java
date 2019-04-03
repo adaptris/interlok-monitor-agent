@@ -1,5 +1,7 @@
 package com.adaptris.monitor.agent.activity;
 
+import com.google.gson.annotations.Expose;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +14,10 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
 
   private transient List<Long> msTaken;
 
+  @Expose
   private int messageCount;
 
+  @Expose
   private long avgMsTaken;
 
   public BaseFlowActivity() {
