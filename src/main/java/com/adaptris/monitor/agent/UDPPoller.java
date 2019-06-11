@@ -1,13 +1,13 @@
 package com.adaptris.monitor.agent;
 
-import com.adaptris.core.CoreException;
-import com.adaptris.core.PollerImp;
-import com.adaptris.monitor.agent.activity.ActivityMap;
-
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
+
+import com.adaptris.core.CoreException;
+import com.adaptris.core.PollerImp;
+import com.adaptris.monitor.agent.activity.ActivityMap;
 
 public class UDPPoller extends PollerImp {
 
@@ -37,14 +37,6 @@ public class UDPPoller extends PollerImp {
         stopped = true;
         if(monitorThread != null)
             monitorThread.interrupt();
-    }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void prepare() throws CoreException {
     }
 
     private Thread createThread() {

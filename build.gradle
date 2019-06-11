@@ -1,12 +1,26 @@
+plugins {
+  id 'java'
+  id 'maven'
+  id 'maven-publish'
+  id 'jacoco'
+  // Manage optional dependencies in maven pom.
+  id 'nebula.optional-base' version '5.0.3'
+  id 'com.github.spotbugs' version '2.0.0'
+}
+
 ext {
-  adpCoreVersion = project.hasProperty('adpCoreVersion') ? project.getProperty('adpCoreVersion') : '3.8-SNAPSHOT'
-  releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '3.8-SNAPSHOT'
-  mavenPublishUrl = project.hasProperty('mavenPublishUrl') ? project.getProperty('mavenPublishUrl') : 'https://development.adaptris.net/nexus/content/repositories/snapshots'
+  interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '3.9-SNAPSHOT'
+  releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '3.9-SNAPSHOT'
+  nexusBaseUrl = project.hasProperty('nexusBaseUrl') ? project.getProperty('nexusBaseUrl') : 'https://nexus.adaptris.net/nexus'
+  mavenPublishUrl = project.hasProperty('mavenPublishUrl') ? project.getProperty('mavenPublishUrl') : nexusBaseUrl + '/content/repositories/snapshots'
+  javadocsBaseUrl = nexusBaseUrl + "/content/sites/javadocs/com/adaptris"
   repoUsername = project.hasProperty('repoUsername') ? project.getProperty('repoUsername') : 'unknown'
   repoPassword = project.hasProperty('repoPassword') ? project.getProperty('repoPassword') : 'unknown'
   defaultNexusRepo = project.hasProperty('defaultNexusRepo') ? project.getProperty('defaultNexusRepo') : 'https://repo1.maven.org/maven2/'
-  interlokJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : 'https://development.adaptris.net/javadocs/latest/Interlok-API/'
-  interlokCommonJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : 'https://development.adaptris.net/javadocs/latest/Interlok-Common/'
+  offlineJavadocPackageDir = new File(project.buildDir, "offline-javadoc-packages")
+
+  interlokJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : javadocsBaseUrl + "/interlok-core/" + interlokCoreVersion
+  interlokCommonJavadocs= project.hasProperty('interlokCommonJavadocs') ? project.getProperty('interlokCommonJavadocs') : javadocsBaseUrl + "/interlok-common/" + interlokCoreVersion
   componentName='Interlok Profiler Monitor'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
@@ -21,11 +35,6 @@ if (JavaVersion.current().isJava8Compatible()) {
   }
 }
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: "jacoco"
-
 sourceCompatibility = 1.8
 group   = 'com.adaptris'
 version = releaseVersion
@@ -33,22 +42,23 @@ def versionDir = "$buildDir/version"
 
 // In this section you declare where to find the dependencies of your project
 repositories {
+  mavenCentral()
   maven { url "$defaultNexusRepo" }
-  maven { url "https://development.adaptris.net/nexus/content/groups/public" }
-  maven { url "https://development.adaptris.net/nexus/content/repositories/snapshots" }
-  maven { url "https://development.adaptris.net/nexus/content/repositories/releases" }
   maven {
       credentials {
         username repoUsername
         password repoPassword
       }
-      url "https://development.adaptris.net/nexus/content/groups/private"
+      url "$nexusBaseUrl/content/groups/private"
     }
+  maven { url "$nexusBaseUrl/content/groups/public" }
+  maven { url "$nexusBaseUrl/content/groups/interlok" }
 }
 
 
 configurations {
   javadoc {}
+  offlineJavadocPackages {}
   all*.exclude group: 'c3p0'
   all*.exclude group: 'commons-logging'
   all*.exclude group: 'javamail'
@@ -65,21 +75,24 @@ configurations.all {
 }
 
 dependencies {
-  compile ("com.adaptris:interlok-core:$adpCoreVersion") { changing= true}
-  compile ("com.adaptris:interlok-common:$adpCoreVersion") { changing= true}
-  compile ("com.adaptris:interlok-profiler:$adpCoreVersion") { changing= true}
+  compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
+  compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
+  compile ("com.adaptris:interlok-profiler:$interlokCoreVersion") { changing= true}
   
   compile ("org.apache.commons:commons-collections4:4.2")
   compile ("com.google.code.gson:gson:1.4")
   
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
   
-  annotationProcessor ("com.adaptris:interlok-common:$adpCoreVersion") {changing= true}
+  annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
 
   testCompile ('junit:junit:4.12')
-  testCompile ("com.adaptris:interlok-stubs:$adpCoreVersion") { changing= true}
+  testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
 
-  javadoc("com.adaptris:interlok-core-apt:$adpCoreVersion") { changing= true}
+
+  offlineJavadocPackages ("com.adaptris:interlok-core:$interlokCoreVersion:javadoc@jar") { changing= true}
+  offlineJavadocPackages ("com.adaptris:interlok-common:$interlokCoreVersion:javadoc@jar") { changing= true}
+  javadoc("com.adaptris:interlok-core-apt:$interlokCoreVersion") { changing= true}
 }
 
 
@@ -111,6 +124,8 @@ task generateVersion {
     versionFile.getParentFile().mkdirs()
     ant.propertyfile(file: versionFile) {
       entry(key: 'component.name', value: componentName)
+      entry(key: 'groupId', value: project.group)
+      entry(key: 'artifactId', value: project.name)
       entry(key: 'build.version', value: releaseVersion)
       entry(key: 'build.date', value: new Date().format('yyyy-MM-dd'))
     }
@@ -119,10 +134,8 @@ task generateVersion {
 
 javadoc {
   configure(options) {
-      links = [
-        interlokJavadocs,
-        interlokCommonJavadocs,
-      ]
+    options.linksOffline(interlokJavadocs, offlineJavadocPackageDir.getCanonicalPath() + "/interlok-core-$interlokCoreVersion-javadoc.jar")
+    options.linksOffline(interlokCommonJavadocs, offlineJavadocPackageDir.getCanonicalPath() + "/interlok-common-$interlokCoreVersion-javadoc.jar")
     taglets = ["com.adaptris.taglet.ConfigTaglet", "com.adaptris.taglet.LicenseTaglet"]
     options.addStringOption "tagletpath", configurations.javadoc.asPath
     title= componentName
@@ -130,7 +143,7 @@ javadoc {
 }
 
 jacoco {
-  toolVersion="0.8.0"
+  toolVersion="0.8.3"
 }
 
 jacocoTestReport {
@@ -140,21 +153,20 @@ jacocoTestReport {
     }
 }
 
-check.dependsOn jacocoTestReport
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
   classifier = 'javadoc'
   from javadoc.destinationDir
 }
 
-task examplesJar(type: Jar, dependsOn: test) {
-  classifier = 'examples'
-  from new File(buildDir, '/examples')
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 artifacts {
   archives javadocJar
-  archives examplesJar
+  archives sourcesJar
 }
 
 publishing {
@@ -163,12 +175,15 @@ publishing {
       from components.java
 
       artifact javadocJar { classifier "javadoc" }
-      artifact examplesJar { classifier "examples" }
+      artifact sourcesJar { classifier "sources" }
 
       pom.withXml {
         asNode().appendNode("description", "Expose profiling data via Multicast and JMX from the Interlok-Profiler.")
+        asNode().appendNode("url", "https://interlok.adaptris.net/interlok-docs/developer-profiler.html")
         def properties = asNode().appendNode("properties")
-        properties.appendNode("target", "3.6.6+")
+        properties.appendNode("target", "3.9.0+")
+        properties.appendNode("tags", "profiling,csv,json,elastic")
+        properties.appendNode("license", "false")
       }
     }
   }
@@ -183,6 +198,24 @@ publishing {
   }
 }
 
-task showMeCache << {
-  configurations.compile.each { println it }
+spotbugs {
+  // showProgress = "true"
+  effort = "max"
+  // Ignore failures?
+  // ignoreFailures = false
+
+  // We only care about "high priority" issues...
+  reportLevel = "high"
+}
+
+// disable spotbugsTests which checks our test code..
+spotbugsTest.enabled = false
+
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+  reports {
+    xml.enabled = false
+    html.enabled = true
+  }
+  // includeFilter = new File("$rootDir/gradle/spotbugs-filter.xml")
+  excludeFilter = new File("$rootDir/gradle/spotbugs-exclude.xml")
 }

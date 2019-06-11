@@ -22,7 +22,7 @@ public enum ClientEventPropagatorCreator {
     }
   };
   
-  protected static Logger log = LoggerFactory.getLogger(ClientEventPropagatorCreator.class);
+  protected static final Logger log = LoggerFactory.getLogger(ClientEventPropagatorCreator.class);
   
   public abstract EventPropagator createClientPropagator(EventMonitorReceiver eventMonitorReceiver) throws Exception;
   
