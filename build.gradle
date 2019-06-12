@@ -80,13 +80,14 @@ dependencies {
   compile ("com.adaptris:interlok-profiler:$interlokCoreVersion") { changing= true}
   
   compile ("org.apache.commons:commons-collections4:4.2")
-  compile ("com.google.code.gson:gson:1.4")
+  compile ("com.google.code.gson:gson:2.8.5")
   
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
   
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
 
   testCompile ('junit:junit:4.12')
+  testCompile ("org.mockito:mockito-all:1.10.19")
   testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
 
 
@@ -219,3 +220,5 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
   // includeFilter = new File("$rootDir/gradle/spotbugs-filter.xml")
   excludeFilter = new File("$rootDir/gradle/spotbugs-exclude.xml")
 }
+
+check.dependsOn jacocoTestReport
