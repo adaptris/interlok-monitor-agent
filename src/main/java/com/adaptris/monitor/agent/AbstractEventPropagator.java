@@ -22,6 +22,8 @@ public abstract class AbstractEventPropagator implements EventPropagator {
     eventMonitorReciever = eventMonitorReceiver;
     running = true;
   }
+  
+  protected abstract void stop();
 
   @Override
   public void run() {
@@ -59,6 +61,7 @@ public abstract class AbstractEventPropagator implements EventPropagator {
   @Override
   public void stopPropagator() {
     running = false;
+    stop();
   }
   
 }

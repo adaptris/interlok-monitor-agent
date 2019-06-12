@@ -59,4 +59,12 @@ public class MulticastEventPropagator extends AbstractEventPropagator {
     
   }
 
+  @Override
+  protected void stop() {
+    if((socket != null) && (socket.isConnected())) {
+      socket.close();
+    }
+    
+  }
+
 }

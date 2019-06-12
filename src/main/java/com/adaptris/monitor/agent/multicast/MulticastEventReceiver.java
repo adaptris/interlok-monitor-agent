@@ -6,25 +6,16 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.adaptris.core.CoreException;
-import com.adaptris.monitor.agent.EventReceiverListener;
-import com.adaptris.monitor.agent.UDPProfilerConsumer;
-import com.adaptris.monitor.agent.activity.ActivityMap;
-import com.adaptris.monitor.agent.activity.ConsumerActivity;
-import com.adaptris.monitor.agent.activity.ProducerActivity;
-import com.adaptris.monitor.agent.json.ConsumerActivitySerializer;
-import com.adaptris.monitor.agent.json.EventJsonMarshaller;
-import com.adaptris.monitor.agent.json.ProducerActivitySerializer;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adaptris.core.CoreException;
+import com.adaptris.monitor.agent.EventReceiverListener;
+import com.adaptris.monitor.agent.activity.ActivityMap;
+import com.adaptris.monitor.agent.json.EventJsonMarshaller;
 
 /**
  * Instantiate an instance of this class, register your custom listener and execute the start method to begin receiving event data.
@@ -47,8 +38,10 @@ public class MulticastEventReceiver {
 
   private MulticastSocket socket;
   
+  private Thread receiverThread;
+  
   public MulticastEventReceiver() {
-    listeners = new ArrayList<>();
+    this.setListeners(new ArrayList<>());
   }
   
   public void start() {
@@ -59,7 +52,7 @@ public class MulticastEventReceiver {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    new Thread(new Runnable() {
+    this.setReceiverThread(new Thread(new Runnable() {
       
       final byte[] udpPacket = new byte[STANDARD_PACKET_SIZE];
       @Override
@@ -85,7 +78,8 @@ public class MulticastEventReceiver {
         if(socket != null)
           socket.close();
       }
-    }, "Event Receiver Thread").start();
+    }, "Event Receiver Thread"));
+    this.getReceiverThread().start();
   }
   
   public void stop() {
@@ -120,5 +114,13 @@ public class MulticastEventReceiver {
     MulticastEventReceiver multicastEventReceiver = new MulticastEventReceiver();
     multicastEventReceiver.start();
     multicastEventReceiver.addEventReceiverListener(activityMap -> System.out.println(jsonMarshaller.marshallToJson(activityMap)));
+  }
+
+  public Thread getReceiverThread() {
+    return receiverThread;
+  }
+
+  public void setReceiverThread(Thread receiverThread) {
+    this.receiverThread = receiverThread;
   }
 }

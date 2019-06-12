@@ -16,7 +16,7 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
   private Map<String, ServiceActivity> services;
   
   public ServiceActivity() {
-    services = new LinkedHashMap<>();
+    this.setServices(new LinkedHashMap<>());
   }
   
   @Override
@@ -39,22 +39,6 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
 
   public void setServices(Map<String, ServiceActivity> services) {
     this.services = services;
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    if (object instanceof ServiceActivity) {
-      return ((ServiceActivity) object).getUniqueId().equals(this.getUniqueId());
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
-    return result;
   }
 
   @Override

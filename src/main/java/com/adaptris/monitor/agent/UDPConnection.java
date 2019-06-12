@@ -23,6 +23,14 @@ public class UDPConnection extends AdaptrisConnectionImp {
         this.port = port;
     }
 
+    public String getGroup() {
+      return group;
+    }
+
+    public void setGroup(String group) {
+      this.group = group;
+    }
+
     public MulticastSocket getSocket() {
         return socket;
     }
@@ -35,10 +43,10 @@ public class UDPConnection extends AdaptrisConnectionImp {
     @Override
     protected void initConnection() throws CoreException {
         try {
-            socket = new MulticastSocket(port);
+            socket = new MulticastSocket(this.getPort());
             socket.setSoTimeout(timeout);
             socket.setReuseAddress(reuseAddress);
-            socket.joinGroup(InetAddress.getByName(group));
+            socket.joinGroup(InetAddress.getByName(this.getGroup()));
         } catch (IOException e) {
             throw new CoreException("Failed to create UDP socket", e);
         }
