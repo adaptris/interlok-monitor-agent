@@ -58,11 +58,11 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
     
     for(Channel channel : ((Adapter) component).getChannelList()) {
       ChannelActivity channelActivity = (ChannelActivity) createActivityObject(channel);
-      parentActivityObject.getChannels().put(channelActivity.getUniqueId(), channelActivity);
+      parentActivityObject.addChannelActivity(channelActivity);
       
       for(Workflow workflow : channel.getWorkflowList()) {
         WorkflowActivity workflowActivity = (WorkflowActivity) createActivityObject(workflow);
-        channelActivity.getWorkflows().put(workflowActivity.getUniqueId(), workflowActivity);
+        channelActivity.addWorkflow(workflowActivity);
         
         ProducerActivity producerActivity = (ProducerActivity) createActivityObject(workflow.getProducer());
         producerActivity.setClassName(workflow.getProducer().getClass().getSimpleName());
@@ -75,7 +75,7 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
         for(Service service : ((WorkflowImp) workflow).getServiceCollection()) {
           ServiceActivity serviceActivity = (ServiceActivity) createActivityObject(service);
           serviceActivity.setClassName(service.getClass().getSimpleName());
-          workflowActivity.getServices().put(serviceActivity.getUniqueId(), serviceActivity);
+          workflowActivity.addServiceActivity(serviceActivity);
 
           traverseServiceForServices(serviceActivity, service);
         }

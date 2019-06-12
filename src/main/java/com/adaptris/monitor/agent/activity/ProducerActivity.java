@@ -22,24 +22,6 @@ public class ProducerActivity extends BaseFlowActivity implements Serializable {
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (object instanceof ProducerActivity) {
-      if(((ProducerActivity) object).getUniqueId().equals(this.getUniqueId()))
-        return true;
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
-    
-    return result;
-  }
-
-  @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     buffer.append("\t\t\tProducer = ");

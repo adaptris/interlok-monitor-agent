@@ -43,7 +43,6 @@ public class UDPPoller extends PollerImp {
         return new Thread("UDP Event Poller Thread") {
             final byte[] udpPacket = new byte[getPacketSize()];
             @Override
-            @SuppressWarnings("unchecked")
             public void run() {
                 while(!stopped) {
                     try {

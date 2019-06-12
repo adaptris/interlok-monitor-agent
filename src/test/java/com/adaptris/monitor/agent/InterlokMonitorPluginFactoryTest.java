@@ -18,5 +18,13 @@ public class InterlokMonitorPluginFactoryTest extends TestCase {
   public void testCreate() throws Exception {
     assertTrue(factory.getPlugin() instanceof ClientPlugin);
   }
+  
+  @Test
+  public void testCreateOnlyOnce() throws Exception {
+    ClientPlugin clientPlugin = factory.getPlugin();
+    ClientPlugin clientPlugin2 = factory.getPlugin();
+    
+    assertTrue(clientPlugin == clientPlugin2);
+  }
 
 }
