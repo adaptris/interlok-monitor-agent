@@ -80,7 +80,7 @@ dependencies {
   compile ("com.adaptris:interlok-profiler:$interlokCoreVersion") { changing= true}
   
   compile ("org.apache.commons:commons-collections4:4.3")
-  compile ("com.google.code.gson:gson:1.4")
+  compile ("com.google.code.gson:gson:2.8.5")
   
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
   
