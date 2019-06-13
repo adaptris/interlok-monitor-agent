@@ -19,6 +19,7 @@ ext {
   defaultNexusRepo = project.hasProperty('defaultNexusRepo') ? project.getProperty('defaultNexusRepo') : 'https://repo1.maven.org/maven2/'
   offlineJavadocPackageDir = new File(project.buildDir, "offline-javadoc-packages")
 
+  verboseTests= project.hasProperty('verboseTests') ? project.getProperty('verboseTests') : "false"
   interlokJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : javadocsBaseUrl + "/interlok-core/" + interlokCoreVersion
   interlokCommonJavadocs= project.hasProperty('interlokCommonJavadocs') ? project.getProperty('interlokCommonJavadocs') : javadocsBaseUrl + "/interlok-common/" + interlokCoreVersion
   componentName='Interlok Profiler Monitor'
@@ -34,6 +35,11 @@ if (JavaVersion.current().isJava8Compatible()) {
     }
   }
 }
+
+ext.verboseTestLogging = { ->
+  return verboseTests.equals("true")
+}
+
 
 sourceCompatibility = 1.8
 group   = 'com.adaptris'
@@ -154,6 +160,13 @@ jacocoTestReport {
     }
 }
 
+test {
+  beforeSuite { descriptor ->
+     if (verboseTestLogging()) {
+      logger.lifecycle("Running: " + descriptor)
+     }
+  }
+}
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
   classifier = 'javadoc'

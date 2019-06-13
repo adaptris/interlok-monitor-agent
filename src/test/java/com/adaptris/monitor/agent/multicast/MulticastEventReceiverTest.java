@@ -1,5 +1,7 @@
 package com.adaptris.monitor.agent.multicast;
 
+import java.util.concurrent.TimeUnit;
+
 import org.mockito.MockitoAnnotations;
 
 import com.adaptris.monitor.agent.EventMonitorReceiver;
@@ -15,6 +17,7 @@ public class MulticastEventReceiverTest extends TestCase {
   
   private final Object monitor = new Object();
     
+  @Override
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
@@ -25,9 +28,7 @@ public class MulticastEventReceiverTest extends TestCase {
     receiver.addEventReceiverListener(new EventReceiverListener() {
       @Override
       public void eventReceived(ActivityMap activityMap) {
-        synchronized(monitor) {
           monitor.notifyAll();
-        }
       }
     });
     receiver.start();
@@ -35,7 +36,8 @@ public class MulticastEventReceiverTest extends TestCase {
     sendUdpPing();
     
     synchronized(monitor) {
-      monitor.wait();
+      // Wait at most 10 seconds... since multicast doesn't always work.
+      monitor.wait(TimeUnit.SECONDS.toMillis(10L));
     }
     receiver.stop();
   }
