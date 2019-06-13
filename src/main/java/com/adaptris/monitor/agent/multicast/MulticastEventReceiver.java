@@ -1,11 +1,8 @@
 package com.adaptris.monitor.agent.multicast;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,35 +31,32 @@ public class MulticastEventReceiver {
   
   private List<EventReceiverListener> listeners;
   
-  private volatile boolean isRunning;
-
-  private MulticastSocket socket;
+  private MulticastSocketReceiver multicastSocketReceiver;
   
-  private Thread receiverThread;
+  private volatile boolean isRunning;
   
   public MulticastEventReceiver() {
     this.setListeners(new ArrayList<>());
+    this.setMulticastSocketReceiver(new MulticastSocketReceiverImpl());
   }
   
   public void start() {
     isRunning = true;
     
     try {
-      socketConnect();
+      this.getMulticastSocketReceiver().connect(DEFAULT_MULTICAST_GROUP, DEFAULT_MULTICAST_PORT, true, 30000);
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    this.setReceiverThread(new Thread(new Runnable() {
+    new Thread(new Runnable() {
       
-      final byte[] udpPacket = new byte[STANDARD_PACKET_SIZE];
       @Override
       public void run() {
         while(isRunning) {
           try {
-            log.debug("Attempting to read packet");
-            final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
-            socket.receive(packet);
-            log.debug("packet read");
+            log.trace("Attempting to read packet");
+            final DatagramPacket packet = getMulticastSocketReceiver().receive(STANDARD_PACKET_SIZE);
+            log.trace("Packet read");
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             ActivityMap activityMap = (ActivityMap) iStream.readObject();
             
@@ -75,22 +69,13 @@ public class MulticastEventReceiver {
           }
         }
         
-        if(socket != null)
-          socket.close();
+        getMulticastSocketReceiver().disconnect();
       }
-    }, "Event Receiver Thread"));
-    this.getReceiverThread().start();
+    }, "Event Receiver Thread").start();
   }
   
   public void stop() {
     isRunning = false;
-  }
-
-  private void socketConnect() throws IOException {
-    socket = new MulticastSocket(DEFAULT_MULTICAST_PORT);
-    socket.setReuseAddress(true);
-    socket.setSoTimeout(300000);
-    socket.joinGroup(InetAddress.getByName(DEFAULT_MULTICAST_GROUP));
   }
   
   public void addEventReceiverListener(EventReceiverListener eventReceiverListener) {
@@ -116,11 +101,11 @@ public class MulticastEventReceiver {
     multicastEventReceiver.addEventReceiverListener(activityMap -> System.out.println(jsonMarshaller.marshallToJson(activityMap)));
   }
 
-  public Thread getReceiverThread() {
-    return receiverThread;
+  public MulticastSocketReceiver getMulticastSocketReceiver() {
+    return multicastSocketReceiver;
   }
 
-  public void setReceiverThread(Thread receiverThread) {
-    this.receiverThread = receiverThread;
+  public void setMulticastSocketReceiver(MulticastSocketReceiver multicastSocketReceiver) {
+    this.multicastSocketReceiver = multicastSocketReceiver;
   }
 }
