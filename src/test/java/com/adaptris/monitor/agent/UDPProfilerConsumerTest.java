@@ -1,7 +1,14 @@
 package com.adaptris.monitor.agent;
 
-import static org.mockito.Mockito.verify;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -11,7 +18,6 @@ import com.adaptris.core.AdaptrisMessageListener;
 import com.adaptris.core.util.LifecycleHelper;
 import com.adaptris.monitor.agent.activity.ActivityMap;
 import com.adaptris.monitor.agent.activity.AdapterActivity;
-import com.adaptris.monitor.agent.multicast.MulticastEventPropagator;
 
 import junit.framework.TestCase;
 
@@ -25,6 +31,7 @@ public class UDPProfilerConsumerTest extends TestCase {
   private UDPPoller poller;
   
   @Mock private AdaptrisMessageListener mockMessageListener;
+  @Mock private UDPDatagramReceiver mockDatagramReceiver;
   
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
@@ -32,6 +39,7 @@ public class UDPProfilerConsumerTest extends TestCase {
     consumer = new UDPProfilerConsumer();
     connection = new UDPConnection();
     poller = new UDPPoller();
+    poller.setDatagramReceiver(mockDatagramReceiver);
     
     connection.setGroup(DEFAULT_MULTICAST_GROUP);
     connection.setPort(DEFAULT_MULTICAST_PORT);
@@ -43,15 +51,16 @@ public class UDPProfilerConsumerTest extends TestCase {
   }
   
   public void testConsumeActivityMap() throws Exception {
+    when(mockDatagramReceiver.receive(consumer))
+        .thenReturn(buildPacket());
+    
     LifecycleHelper.initAndStart(connection);
     LifecycleHelper.initAndStart(consumer);
     
     try {
-      this.sendUdpPing();
-      
       Thread.sleep(500);
       
-      verify(mockMessageListener).onAdaptrisMessage(any(AdaptrisMessage.class));
+      verify(mockMessageListener, atLeast(1)).onAdaptrisMessage(any(AdaptrisMessage.class));
       
     } finally {
       LifecycleHelper.stopAndClose(consumer);
@@ -59,14 +68,17 @@ public class UDPProfilerConsumerTest extends TestCase {
     }
   }
   
-  private void sendUdpPing() throws Exception {
+  private DatagramPacket buildPacket() throws Exception {
     ActivityMap activityMap = new ActivityMap();
     activityMap.getAdapters().put("adapter", new AdapterActivity());
     
-    MulticastEventPropagator eventPropagator = new MulticastEventPropagator(EventMonitorReceiver.getInstance());
-    eventPropagator.propagateProcessEvent(activityMap);
-    
-    eventPropagator.stopPropagator();
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(baos);
+    oos.writeObject(activityMap);
+    oos.flush();
+    byte[] data= baos.toByteArray();
+
+    return new DatagramPacket(data, data.length, InetAddress.getByName(DEFAULT_MULTICAST_GROUP), DEFAULT_MULTICAST_PORT);
   }
 
 }
