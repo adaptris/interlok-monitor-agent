@@ -84,12 +84,12 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-profiler:$interlokCoreVersion") { changing= true}
-  
+
   compile ("org.apache.commons:commons-collections4:4.3")
   compile ("com.google.code.gson:gson:2.8.5")
-  
+
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  
+
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
 
   testCompile ('junit:junit:4.12')
@@ -196,7 +196,7 @@ publishing {
         asNode().appendNode("url", "https://interlok.adaptris.net/interlok-docs/developer-profiler.html")
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.9.0+")
-        properties.appendNode("tags", "profiling,csv,json,elastic")
+        properties.appendNode("tags", "profiling")
         properties.appendNode("license", "false")
       }
     }
