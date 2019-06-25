@@ -19,12 +19,13 @@ ext {
   defaultNexusRepo = project.hasProperty('defaultNexusRepo') ? project.getProperty('defaultNexusRepo') : 'https://repo1.maven.org/maven2/'
   offlineJavadocPackageDir = new File(project.buildDir, "offline-javadoc-packages")
 
+  verboseTests= project.hasProperty('verboseTests') ? project.getProperty('verboseTests') : "false"
   interlokJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : javadocsBaseUrl + "/interlok-core/" + interlokCoreVersion
   interlokCommonJavadocs= project.hasProperty('interlokCommonJavadocs') ? project.getProperty('interlokCommonJavadocs') : javadocsBaseUrl + "/interlok-common/" + interlokCoreVersion
   componentName='Interlok Profiler Monitor'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '1.7.25'
+  slf4jVersion = '1.7.26'
 }
 
 if (JavaVersion.current().isJava8Compatible()) {
@@ -34,6 +35,11 @@ if (JavaVersion.current().isJava8Compatible()) {
     }
   }
 }
+
+ext.verboseTestLogging = { ->
+  return verboseTests.equals("true")
+}
+
 
 sourceCompatibility = 1.8
 group   = 'com.adaptris'
@@ -78,15 +84,16 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-profiler:$interlokCoreVersion") { changing= true}
-  
-  compile ("org.apache.commons:commons-collections4:4.2")
-  compile ("com.google.code.gson:gson:1.4")
-  
+
+  compile ("org.apache.commons:commons-collections4:4.3")
+  compile ("com.google.code.gson:gson:2.8.5")
+
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  
+
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
 
   testCompile ('junit:junit:4.12')
+  testCompile ("org.mockito:mockito-all:1.10.19")
   testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
 
 
@@ -153,6 +160,13 @@ jacocoTestReport {
     }
 }
 
+test {
+  beforeSuite { descriptor ->
+     if (verboseTestLogging()) {
+      logger.lifecycle("Running: " + descriptor)
+     }
+  }
+}
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
   classifier = 'javadoc'
@@ -180,9 +194,10 @@ publishing {
       pom.withXml {
         asNode().appendNode("description", "Expose profiling data via Multicast and JMX from the Interlok-Profiler.")
         asNode().appendNode("url", "https://interlok.adaptris.net/interlok-docs/developer-profiler.html")
+        asNode().appendNode("name", componentName)
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.9.0+")
-        properties.appendNode("tags", "profiling,csv,json,elastic")
+        properties.appendNode("tags", "profiling")
         properties.appendNode("license", "false")
       }
     }
@@ -219,3 +234,5 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
   // includeFilter = new File("$rootDir/gradle/spotbugs-filter.xml")
   excludeFilter = new File("$rootDir/gradle/spotbugs-exclude.xml")
 }
+
+check.dependsOn jacocoTestReport

@@ -20,7 +20,7 @@ public class JmxEventPropagator extends AbstractEventPropagator {
   
   public JmxEventPropagator(EventMonitorReceiver eventMonitorReceiver) throws Exception {
     super(eventMonitorReceiver);
-    eventMBean = new ProfilerEventClient();
+    this.setEventMBean(new ProfilerEventClient());
     mbeanName = new ObjectName(AdapterComponentMBean.JMX_DOMAIN_NAME + ":type=Profiler");
     this.registerMBean(eventMBean);
   }
@@ -38,6 +38,18 @@ public class JmxEventPropagator extends AbstractEventPropagator {
 
   private void sendJmx(ActivityMap activityMap) {
     this.eventMBean.addEventActivityMap(activityMap);
+  }
+
+  @Override
+  protected void stop() {
+  }
+
+  public ProfilerEventClient getEventMBean() {
+    return eventMBean;
+  }
+
+  public void setEventMBean(ProfilerEventClient eventMBean) {
+    this.eventMBean = eventMBean;
   }
 
 }

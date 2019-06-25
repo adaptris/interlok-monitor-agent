@@ -3,7 +3,6 @@ package com.adaptris.monitor.agent;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
-import java.net.MulticastSocket;
 
 import com.adaptris.core.CoreException;
 import com.adaptris.core.PollerImp;
@@ -13,7 +12,12 @@ public class UDPPoller extends PollerImp {
 
     private transient boolean stopped = false;
     private transient Thread monitorThread;
+    private transient UDPDatagramReceiver datagramReceiver;
 
+    public UDPPoller() {
+      this.setDatagramReceiver(new UDPDatagramReceiverImpl());
+    }
+    
     @Override
     public void init() throws CoreException {
         if(!(this.retrieveConsumer() instanceof UDPProfilerConsumer))
@@ -41,20 +45,15 @@ public class UDPPoller extends PollerImp {
 
     private Thread createThread() {
         return new Thread("UDP Event Poller Thread") {
-            final byte[] udpPacket = new byte[getPacketSize()];
             @Override
-            @SuppressWarnings("unchecked")
             public void run() {
                 while(!stopped) {
                     try {
-                        final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
-                        getSocket().receive(packet);
-
+                        DatagramPacket packet = getDatagramReceiver().receive(((UDPProfilerConsumer)retrieveConsumer()));
+                        
                         ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
                         ActivityMap activityMap = (ActivityMap) iStream.readObject();
                         convertAndProcessMessage(activityMap);
-//                        AdaptrisMessage msg = AdaptrisMessageFactory.defaultIfNull(retrieveConsumer().getMessageFactory()).newMessage(data);
-//                        retrieveConsumer().retrieveAdaptrisMessageListener().onAdaptrisMessage(msg);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -68,12 +67,11 @@ public class UDPPoller extends PollerImp {
         ((UDPProfilerConsumer)retrieveConsumer()).processMessage(activityMap);
     }
 
-    private int getPacketSize() {
-        return ((UDPProfilerConsumer)this.retrieveConsumer()).getPacketSize();
+    public UDPDatagramReceiver getDatagramReceiver() {
+      return datagramReceiver;
     }
 
-    private MulticastSocket getSocket() {
-        UDPConnection udpConnection = ((UDPProfilerConsumer) this.retrieveConsumer()).retrieveConnection(UDPConnection.class);
-        return udpConnection.getSocket();
+    public void setDatagramReceiver(UDPDatagramReceiver datagramReceiver) {
+      this.datagramReceiver = datagramReceiver;
     }
 }

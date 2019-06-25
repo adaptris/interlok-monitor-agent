@@ -15,7 +15,7 @@ public class AdapterActivity extends BaseActivity implements Serializable {
   private Map<String, ChannelActivity> channels;
 
   public AdapterActivity() {
-    channels = new LinkedHashMap<>();
+    this.setChannels(new LinkedHashMap<>());
   }
   
   @Override
@@ -42,24 +42,6 @@ public class AdapterActivity extends BaseActivity implements Serializable {
 
   public void setChannels(Map<String, ChannelActivity> channels) {
     this.channels = channels;
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    if(object instanceof AdapterActivity) {
-      if(((AdapterActivity) object).getUniqueId().equals(getUniqueId())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + (getUniqueId() == null ? 0 : getUniqueId().hashCode());
-    return result;
   }
 
   @Override

@@ -1,30 +1,18 @@
 package com.adaptris.monitor.agent.multicast;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.adaptris.core.CoreException;
-import com.adaptris.monitor.agent.EventReceiverListener;
-import com.adaptris.monitor.agent.UDPProfilerConsumer;
-import com.adaptris.monitor.agent.activity.ActivityMap;
-import com.adaptris.monitor.agent.activity.ConsumerActivity;
-import com.adaptris.monitor.agent.activity.ProducerActivity;
-import com.adaptris.monitor.agent.json.ConsumerActivitySerializer;
-import com.adaptris.monitor.agent.json.EventJsonMarshaller;
-import com.adaptris.monitor.agent.json.ProducerActivitySerializer;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adaptris.core.CoreException;
+import com.adaptris.monitor.agent.EventReceiverListener;
+import com.adaptris.monitor.agent.activity.ActivityMap;
+import com.adaptris.monitor.agent.json.EventJsonMarshaller;
 
 /**
  * Instantiate an instance of this class, register your custom listener and execute the start method to begin receiving event data.
@@ -43,33 +31,32 @@ public class MulticastEventReceiver {
   
   private List<EventReceiverListener> listeners;
   
+  private MulticastSocketReceiver multicastSocketReceiver;
+  
   private volatile boolean isRunning;
-
-  private MulticastSocket socket;
   
   public MulticastEventReceiver() {
-    listeners = new ArrayList<>();
+    this.setListeners(new ArrayList<>());
+    this.setMulticastSocketReceiver(new MulticastSocketReceiverImpl());
   }
   
   public void start() {
     isRunning = true;
     
     try {
-      socketConnect();
+      this.getMulticastSocketReceiver().connect(DEFAULT_MULTICAST_GROUP, DEFAULT_MULTICAST_PORT, true, 30000);
     } catch (Exception ex) {
       ex.printStackTrace();
     }
     new Thread(new Runnable() {
       
-      final byte[] udpPacket = new byte[STANDARD_PACKET_SIZE];
       @Override
       public void run() {
         while(isRunning) {
           try {
-            log.debug("Attempting to read packet");
-            final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
-            socket.receive(packet);
-            log.debug("packet read");
+            log.trace("Attempting to read packet");
+            final DatagramPacket packet = getMulticastSocketReceiver().receive(STANDARD_PACKET_SIZE);
+            log.trace("Packet read");
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             ActivityMap activityMap = (ActivityMap) iStream.readObject();
             
@@ -82,21 +69,13 @@ public class MulticastEventReceiver {
           }
         }
         
-        if(socket != null)
-          socket.close();
+        getMulticastSocketReceiver().disconnect();
       }
     }, "Event Receiver Thread").start();
   }
   
   public void stop() {
     isRunning = false;
-  }
-
-  private void socketConnect() throws IOException {
-    socket = new MulticastSocket(DEFAULT_MULTICAST_PORT);
-    socket.setReuseAddress(true);
-    socket.setSoTimeout(300000);
-    socket.joinGroup(InetAddress.getByName(DEFAULT_MULTICAST_GROUP));
   }
   
   public void addEventReceiverListener(EventReceiverListener eventReceiverListener) {
@@ -120,5 +99,13 @@ public class MulticastEventReceiver {
     MulticastEventReceiver multicastEventReceiver = new MulticastEventReceiver();
     multicastEventReceiver.start();
     multicastEventReceiver.addEventReceiverListener(activityMap -> System.out.println(jsonMarshaller.marshallToJson(activityMap)));
+  }
+
+  public MulticastSocketReceiver getMulticastSocketReceiver() {
+    return multicastSocketReceiver;
+  }
+
+  public void setMulticastSocketReceiver(MulticastSocketReceiver multicastSocketReceiver) {
+    this.multicastSocketReceiver = multicastSocketReceiver;
   }
 }
