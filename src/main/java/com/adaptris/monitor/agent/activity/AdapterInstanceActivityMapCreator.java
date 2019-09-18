@@ -24,9 +24,9 @@ import com.adaptris.core.Workflow;
 import com.adaptris.core.WorkflowImp;
 
 public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
-  
+
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
-  
+
   // Keep track of unique-ids we have seen, then we can for actual uniqueness.
   private List<String> componentIds;
 
@@ -36,16 +36,17 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
   @Override
   public ActivityMap createBaseMap(Object object) {
     componentIds = new ArrayList<>();
-    
+
     ActivityMap returnedMap = new ActivityMap();
-    
+
     if(object instanceof Adapter) {
       BaseActivity activityObject = createActivityObject((AdaptrisComponent) object);
       returnedMap.getAdapters().put(activityObject.getUniqueId(), activityObject);
       traverseAdapter((AdapterActivity) activityObject, (AdaptrisComponent) object);
-    } else 
+    } else {
       throw new RuntimeException("Cannot create an ActivityMap from an instance of " + object.getClass().getName());
-    
+    }
+
     return returnedMap;
   }
 
@@ -55,26 +56,25 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
    * @param object
    */
   private void traverseAdapter(AdapterActivity parentActivityObject, AdaptrisComponent component) {
-    
+
     for(Channel channel : ((Adapter) component).getChannelList()) {
       ChannelActivity channelActivity = (ChannelActivity) createActivityObject(channel);
       parentActivityObject.addChannelActivity(channelActivity);
-      
+
       for(Workflow workflow : channel.getWorkflowList()) {
         WorkflowActivity workflowActivity = (WorkflowActivity) createActivityObject(workflow);
         channelActivity.addWorkflow(workflowActivity);
-        
+
         ProducerActivity producerActivity = (ProducerActivity) createActivityObject(workflow.getProducer());
         producerActivity.setClassName(workflow.getProducer().getClass().getSimpleName());
         ConsumerActivity consumerActivity = (ConsumerActivity) createActivityObject(workflow.getConsumer());
         consumerActivity.setClassName(workflow.getConsumer().getClass().getSimpleName());
-        
+
         workflowActivity.setConsumerActivity(consumerActivity);
         workflowActivity.setProducerActivity(producerActivity);
-        
-        for(Service service : ((WorkflowImp) workflow).getServiceCollection()) {
-          ServiceActivity serviceActivity = (ServiceActivity) createActivityObject(service);
-          serviceActivity.setClassName(service.getClass().getSimpleName());
+
+        for (Service service : ((WorkflowImp) workflow).getServiceCollection()) {
+          ServiceActivity serviceActivity = createServiceActivity(service);
           workflowActivity.addServiceActivity(serviceActivity);
 
           traverseServiceForServices(serviceActivity, service);
@@ -90,22 +90,32 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
    */
   private void traverseServiceForServices(ServiceActivity serviceActivity, Service service) {
     try {
-      List<Service> allChildServices = this.scanClassReflectiveAllGetters(service);
-      for(Service childService : allChildServices) {
-        ServiceActivity childServiceActivity = (ServiceActivity) this.createActivityObject(childService);
-        childServiceActivity.setClassName(service.getClass().getSimpleName());
+      for (Service childService : scanClassReflectiveAllGetters(service)) {
+        ServiceActivity childServiceActivity = createServiceActivity(childService);
         serviceActivity.getServices().put(childServiceActivity.getUniqueId(), childServiceActivity);
-        
-        if(childService instanceof ServiceCollection)
-          this.traverseServiceForServices(childServiceActivity, childService);
+
+        if(childService instanceof ServiceCollection) {
+          traverseServiceForServices(childServiceActivity, childService);
+        }
       }
-      
+
     } catch (Throwable throwable) {
       log.error("Traversing Service has caused an error.", throwable);
     }
   }
 
-  
+  /**
+   * Create a ServiceActivity implementation object which will later contain performance data for each service.
+   *
+   * @param Service
+   * @return ServiceActivity
+   */
+  private ServiceActivity createServiceActivity(Service service) {
+    ServiceActivity serviceActivity = (ServiceActivity) createActivityObject(service);
+    serviceActivity.setClassName(service.getClass().getSimpleName());
+    return serviceActivity;
+  }
+
   /**
    * Will scan the given service for all getter methods and return the name of the getter with the getter return value
    * if and only if the returned getter value is of type Service.
@@ -117,35 +127,36 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
     try {
       List<Service> map = new ArrayList<>();
       Arrays.asList(Introspector.getBeanInfo(service.getClass(), Object.class).getPropertyDescriptors())
-          .stream()
-          .filter(pd -> Objects.nonNull(pd.getReadMethod()))  // filter out properties with setters only
-          .forEach(pd -> { // invoke method to get value
-            try {
-              Object value = pd.getReadMethod().invoke(service);
-              if (value != null) {
-                if(value instanceof Service)
-                  map.add((Service) value);
-                else if (value instanceof Collection<?>) { // attempt to catch all collection with Service genric type.
-                  ParameterizedType genericReturnType = (ParameterizedType) pd.getReadMethod().getGenericReturnType();
-                  if(genericReturnType.getActualTypeArguments()[0] == Service.class) {
-                    for(Service cService : (List<Service>) value) {
-                      map.add(cService);
-                    }
-                    
-                  }
+      .stream()
+      .filter(pd -> Objects.nonNull(pd.getReadMethod()))  // filter out properties with setters only
+      .forEach(pd -> { // invoke method to get value
+        try {
+          Object value = pd.getReadMethod().invoke(service);
+          if (value != null) {
+            if(value instanceof Service) {
+              map.add((Service) value);
+            } else if (value instanceof Collection<?>) { // attempt to catch all collection with Service generic type.
+              ParameterizedType genericReturnType = (ParameterizedType) pd.getReadMethod().getGenericReturnType();
+              if(genericReturnType.getActualTypeArguments()[0] == Service.class) {
+                for(Service cService : (List<Service>) value) {
+                  map.add(cService);
                 }
-                  
+
               }
-            } catch (Exception e) {
-              throw new RuntimeException(e);
             }
-          });
+
+          }
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
       return map;
     } catch (IntrospectionException e) {
       log.error("Failed to get all child services", e);
       return Collections.emptyList();
     }
   }
+
   /**
    * Create the BaseActivity implementation object which will later contain performance data for each component.
    * @param AdaptrisComponent
@@ -153,26 +164,28 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
    */
   private BaseActivity createActivityObject(AdaptrisComponent adaptrisComponent) {
     BaseActivity returnedBaseActivity = null;
-    if(adaptrisComponent instanceof Adapter)
+    if(adaptrisComponent instanceof Adapter) {
       returnedBaseActivity = new AdapterActivity();
-    else if (adaptrisComponent instanceof Channel)
+    } else if (adaptrisComponent instanceof Channel) {
       returnedBaseActivity = new ChannelActivity();
-    else if (adaptrisComponent instanceof Workflow)
+    } else if (adaptrisComponent instanceof Workflow) {
       returnedBaseActivity = new WorkflowActivity();
-    else if (adaptrisComponent instanceof Service)
+    } else if (adaptrisComponent instanceof Service) {
       returnedBaseActivity = new ServiceActivity();
-    else if (adaptrisComponent instanceof AdaptrisMessageConsumer)
+    } else if (adaptrisComponent instanceof AdaptrisMessageConsumer) {
       returnedBaseActivity = new ConsumerActivity();
-    else if (adaptrisComponent instanceof AdaptrisMessageProducer)
+    } else if (adaptrisComponent instanceof AdaptrisMessageProducer) {
       returnedBaseActivity = new ProducerActivity();
-    
+    }
+
     returnedBaseActivity.setUniqueId(adaptrisComponent.getUniqueId());
-    
-    if(componentIds.contains(adaptrisComponent.getUniqueId()))
-      log.warn("Component UniqueID clash; {}.\nProfiling may be compromised.", adaptrisComponent.getUniqueId()); 
-    else
+
+    if(componentIds.contains(adaptrisComponent.getUniqueId())) {
+      log.warn("Component UniqueID clash; {}.\nProfiling may be compromised.", adaptrisComponent.getUniqueId());
+    } else {
       componentIds.add(adaptrisComponent.getUniqueId());
-    
+    }
+
     return returnedBaseActivity;
   }
 

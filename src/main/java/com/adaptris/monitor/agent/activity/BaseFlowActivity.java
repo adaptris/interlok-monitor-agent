@@ -1,10 +1,10 @@
 package com.adaptris.monitor.agent.activity;
 
-import com.google.gson.annotations.Expose;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gson.annotations.Expose;
 
 public abstract class BaseFlowActivity extends BaseActivity implements Serializable {
 
@@ -23,23 +23,24 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
   public BaseFlowActivity() {
     msTaken = new ArrayList<>();
   }
-  
+
   protected long calculateAvgTimeTaken() {
     long totalTimeTaken = 0;
-    for(long timeTaken : this.getMsTaken())
+    for (long timeTaken : getMsTaken()) {
       totalTimeTaken += timeTaken;
-    
-    if(totalTimeTaken > 0)
-      return totalTimeTaken / this.getMsTaken().size();
-    else
+    }
+    if (totalTimeTaken > 0) {
+      return totalTimeTaken / getMsTaken().size();
+    } else {
       return 0;
+    }
   }
-  
+
   @Override
   public void resetActivity() {
-    this.setAvgMsTaken(0);
-    this.setMessageCount(0);
-    this.setMsTaken(new ArrayList<>());
+    setAvgMsTaken(0);
+    setMessageCount(0);
+    setMsTaken(new ArrayList<>());
   }
 
   public String getClassName() {
