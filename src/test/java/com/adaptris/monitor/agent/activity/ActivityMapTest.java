@@ -30,7 +30,9 @@ public class ActivityMapTest extends TestCase {
     serviceListStep.setStepInstanceId("serviceList1");
     serviceListStep.setStepType(StepType.SERVICE);
     serviceListStep.setTimeStarted(System.currentTimeMillis());
+    serviceListStep.setTimeStartedNanos(System.nanoTime());
     serviceListStep.setTimeTakenMs(1);
+    serviceListStep.setTimeTakenNanos(1000);
     serviceListStep.setOrder(0);
 
     activityMap.addActivity(serviceListStep);
@@ -40,7 +42,9 @@ public class ActivityMapTest extends TestCase {
     serviceStep.setStepInstanceId("service2");
     serviceStep.setStepType(StepType.SERVICE);
     serviceStep.setTimeStarted(System.currentTimeMillis());
+    serviceListStep.setTimeStartedNanos(System.nanoTime());
     serviceStep.setTimeTakenMs(1);
+    serviceListStep.setTimeTakenNanos(1000);
     serviceStep.setOrder(1);
 
     activityMap.addActivity(serviceStep);
@@ -50,7 +54,9 @@ public class ActivityMapTest extends TestCase {
     consumerStep.setStepInstanceId("consumer");
     consumerStep.setStepType(StepType.CONSUMER);
     consumerStep.setTimeStarted(System.currentTimeMillis());
+    consumerStep.setTimeStartedNanos(System.nanoTime());
     consumerStep.setTimeTakenMs(1);
+    consumerStep.setTimeTakenNanos(1000);
 
     activityMap.addActivity(consumerStep);
 
@@ -59,7 +65,9 @@ public class ActivityMapTest extends TestCase {
     producerStep.setStepInstanceId("producer");
     producerStep.setStepType(StepType.PRODUCER);
     producerStep.setTimeStarted(System.currentTimeMillis());
-    producerStep.setTimeTakenMs(1);
+    producerStep.setTimeStartedNanos(System.nanoTime());
+    producerStep.setTimeTakenMs(0);
+    producerStep.setTimeTakenNanos(0);
 
     activityMap.addActivity(producerStep);
 
@@ -94,6 +102,47 @@ public class ActivityMapTest extends TestCase {
     assertTrue(mapString.contains("serviceList1"));
     assertTrue(mapString.contains("service2"));
     assertTrue(mapString.contains("serviceList2"));
+    assertTrue(mapString.contains("consumer"));
+    assertTrue(mapString.contains("producer"));
+  }
+
+  public void testProcessEventsWrongConsumerAndProducerProcessStepId() {
+    WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
+        .get("channel1").getWorkflows().get("workflow1");
+
+    ConsumerActivity consumerActivity = workflowActivity.getConsumerActivity();
+    ProducerActivity producerActivity = workflowActivity.getProducerActivity();
+
+    MessageProcessStep consumerStep = new MessageProcessStep();
+    consumerStep.setMessageId("1");
+    consumerStep.setStepInstanceId("differentId");
+    consumerStep.setStepType(StepType.CONSUMER);
+    consumerStep.setTimeStarted(System.currentTimeMillis());
+    consumerStep.setTimeStartedNanos(System.nanoTime());
+    consumerStep.setTimeTakenMs(1);
+    consumerStep.setTimeTakenNanos(1000);
+
+    consumerActivity.addActivity(consumerStep);
+
+    MessageProcessStep producerStep = new MessageProcessStep();
+    producerStep.setMessageId("1");
+    producerStep.setStepInstanceId("differentId");
+    producerStep.setStepType(StepType.PRODUCER);
+    producerStep.setTimeStarted(System.currentTimeMillis());
+    producerStep.setTimeStartedNanos(System.nanoTime());
+    producerStep.setTimeTakenMs(0);
+    producerStep.setTimeTakenNanos(0);
+
+    producerActivity.addActivity(producerStep);
+
+    assertEquals(0, consumerActivity.getMessageCount());
+    assertEquals(0, producerActivity.getMessageCount());
+
+    String mapString = activityMap.toString();
+
+    assertTrue(mapString.contains(TestUtils.ADAPTER_ID));
+    assertTrue(mapString.contains("channel1"));
+    assertTrue(mapString.contains("workflow1"));
     assertTrue(mapString.contains("consumer"));
     assertTrue(mapString.contains("producer"));
   }

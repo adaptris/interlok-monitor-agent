@@ -17,7 +17,7 @@ public class ProducerActivitySerializerTest extends TestCase {
     ProducerActivity producerActivity = new ProducerActivity();
     producerActivity.setUniqueId("consumer-activity");
     producerActivity.setMessageCount(10);
-    producerActivity.setAvgMsTaken(1000);
+    producerActivity.setAvgNsTaken(1000);
     
     JsonObject json = (JsonObject) serializer.serialize(producerActivity, null, null);
     

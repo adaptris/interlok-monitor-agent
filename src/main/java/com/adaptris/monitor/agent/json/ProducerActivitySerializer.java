@@ -10,14 +10,14 @@ import com.google.gson.JsonSerializer;
 
 public class ProducerActivitySerializer implements JsonSerializer<ProducerActivity> {
 
-	@Override
-	public JsonElement serialize(ProducerActivity src, Type typeOfSrc, JsonSerializationContext context) {
-		JsonObject object = new JsonObject();
-		object.addProperty("uniqueId", src.getUniqueId());
-		object.addProperty("msgCount", src.getMessageCount());
-		object.addProperty("averageTimeTaken", src.getAvgMsTaken());
-		// send back to Gson serializer
-		return object;
-	}
+  @Override
+  public JsonElement serialize(ProducerActivity src, Type typeOfSrc, JsonSerializationContext context) {
+    JsonObject object = new JsonObject();
+    object.addProperty("uniqueId", src.getUniqueId());
+    object.addProperty("msgCount", src.getMessageCount());
+    object.addProperty("averageTimeTaken", src.getAvgNsTaken());
+    // send back to Gson serializer
+    return object;
+  }
 
 }
