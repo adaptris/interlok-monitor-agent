@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
 public abstract class BaseFlowActivity extends BaseActivity implements Serializable {
@@ -12,35 +13,44 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
 
   private String className;
 
-  private transient List<Long> msTaken;
+  private transient List<Long> nsTaken;
 
   @Expose
   private int messageCount;
 
   @Expose
+  private long avgNsTaken;
+
+  @Expose
   private long avgMsTaken;
 
   public BaseFlowActivity() {
-    msTaken = new ArrayList<>();
+    nsTaken = new ArrayList<>();
   }
 
   protected long calculateAvgTimeTaken() {
     long totalTimeTaken = 0;
-    for (long timeTaken : getMsTaken()) {
+    for (long timeTaken : getNsTaken()) {
       totalTimeTaken += timeTaken;
     }
     if (totalTimeTaken > 0) {
-      return totalTimeTaken / getMsTaken().size();
+      return totalTimeTaken / getNsTaken().size();
     } else {
       return 0;
     }
   }
 
+  protected void addActivityMetrics(ProcessStep processStep) {
+    getNsTaken().add(processStep.getTimeTakenNanos());
+    setAvgNsTaken(calculateAvgTimeTaken());
+    setMessageCount(getMessageCount() + 1);
+  }
+
   @Override
   public void resetActivity() {
-    setAvgMsTaken(0);
+    setAvgNsTaken(0);
     setMessageCount(0);
-    setMsTaken(new ArrayList<>());
+    setNsTaken(new ArrayList<>());
   }
 
   public String getClassName() {
@@ -51,10 +61,6 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
     this.className = className;
   }
 
-  public void addMessageId(String messageId, long timeTaken) {
-    getMsTaken().add(timeTaken);
-  }
-
   public int getMessageCount() {
     return messageCount;
   }
@@ -63,20 +69,25 @@ public abstract class BaseFlowActivity extends BaseActivity implements Serializa
     this.messageCount = messageCount;
   }
 
-  public List<Long> getMsTaken() {
-    return msTaken;
+  public List<Long> getNsTaken() {
+    return nsTaken;
   }
 
-  public void setMsTaken(List<Long> msTaken) {
-    this.msTaken = msTaken;
+  public void setNsTaken(List<Long> nsTaken) {
+    this.nsTaken = nsTaken;
+  }
+
+  public long getAvgNsTaken() {
+    return avgNsTaken;
+  }
+
+  public void setAvgNsTaken(long avgNsTaken) {
+    this.avgNsTaken = avgNsTaken;
+    avgMsTaken = avgNsTaken / 1000000;
   }
 
   public long getAvgMsTaken() {
     return avgMsTaken;
-  }
-
-  public void setAvgMsTaken(long avgMsTaken) {
-    this.avgMsTaken = avgMsTaken;
   }
 
 }

@@ -26,9 +26,7 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
   @Override
   public void addActivity(ProcessStep processStep) {
     if (StringUtils.equals(processStep.getStepInstanceId(), getUniqueId())) {
-      getMsTaken().add(processStep.getTimeTakenMs());
-      setAvgMsTaken(calculateAvgTimeTaken());
-      setMessageCount(getMessageCount() + 1);
+      addActivityMetrics(processStep);
       setOrder(processStep.getOrder());
     } else {
       for(String serviceId : getServices().keySet()) {
@@ -81,8 +79,8 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
     buffer.append(" (");
     buffer.append(getMessageCount());
     buffer.append(" at ");
-    buffer.append(getAvgMsTaken());
-    buffer.append("  nanos (" + getAvgMsTaken() / 1000000 + " ms)");
+    buffer.append(getAvgNsTaken());
+    buffer.append("  nanos (").append(getAvgMsTaken()).append(" ms)");
     buffer.append(")");
     buffer.append("\n");
 
