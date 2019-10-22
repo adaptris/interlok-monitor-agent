@@ -1,110 +1,150 @@
 package com.adaptris.monitor.agent.activity;
 
 import com.adaptris.core.Adapter;
-import com.adaptris.core.Channel;
-import com.adaptris.core.NullMessageConsumer;
-import com.adaptris.core.NullMessageProducer;
-import com.adaptris.core.ServiceList;
-import com.adaptris.core.StandardWorkflow;
-import com.adaptris.core.services.LogMessageService;
 import com.adaptris.profiler.MessageProcessStep;
 import com.adaptris.profiler.StepType;
 
 import junit.framework.TestCase;
 
+
 public class ActivityMapTest extends TestCase {
-  
-  private static final String ADAPTER_ID = "adapter";
-  
+
   private ActivityMap activityMap;
-  
+
+  @Override
   public void setUp() throws Exception {
-    Adapter adapter = buildNestedServiceTestAdapter();
-    
+    Adapter adapter = TestUtils.buildNestedServiceTestAdapter();
+
     AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
     activityMap = activityMapCreator.createBaseMap(adapter);
   }
-  
+
+  @Override
   public void tearDown() throws Exception {
     activityMap.resetActivity();
   }
 
   public void testProcessEvents() {
+    MessageProcessStep serviceListStep = new MessageProcessStep();
+    serviceListStep.setMessageId("1");
+    serviceListStep.setStepInstanceId("serviceList1");
+    serviceListStep.setStepType(StepType.SERVICE);
+    serviceListStep.setTimeStarted(System.currentTimeMillis());
+    serviceListStep.setTimeStartedNanos(System.nanoTime());
+    serviceListStep.setTimeTakenMs(1);
+    serviceListStep.setTimeTakenNanos(1000);
+    serviceListStep.setOrder(0);
+
+    activityMap.addActivity(serviceListStep);
+
     MessageProcessStep serviceStep = new MessageProcessStep();
     serviceStep.setMessageId("1");
     serviceStep.setStepInstanceId("service2");
     serviceStep.setStepType(StepType.SERVICE);
     serviceStep.setTimeStarted(System.currentTimeMillis());
+    serviceListStep.setTimeStartedNanos(System.nanoTime());
     serviceStep.setTimeTakenMs(1);
-    
-    this.activityMap.addActivity(serviceStep);
-    
+    serviceListStep.setTimeTakenNanos(1000);
+    serviceStep.setOrder(1);
+
+    activityMap.addActivity(serviceStep);
+
     MessageProcessStep consumerStep = new MessageProcessStep();
     consumerStep.setMessageId("1");
     consumerStep.setStepInstanceId("consumer");
     consumerStep.setStepType(StepType.CONSUMER);
     consumerStep.setTimeStarted(System.currentTimeMillis());
+    consumerStep.setTimeStartedNanos(System.nanoTime());
     consumerStep.setTimeTakenMs(1);
-    
-    this.activityMap.addActivity(consumerStep);
-    
+    consumerStep.setTimeTakenNanos(1000);
+
+    activityMap.addActivity(consumerStep);
+
     MessageProcessStep producerStep = new MessageProcessStep();
     producerStep.setMessageId("1");
     producerStep.setStepInstanceId("producer");
     producerStep.setStepType(StepType.PRODUCER);
     producerStep.setTimeStarted(System.currentTimeMillis());
-    producerStep.setTimeTakenMs(1);
-    
-    this.activityMap.addActivity(producerStep);
-    
-    WorkflowActivity workflowActivity = ((AdapterActivity) this.activityMap.getAdapters().get(ADAPTER_ID)).getChannels().get("channel1").getWorkflows().get("workflow1");
-    
+    producerStep.setTimeStartedNanos(System.nanoTime());
+    producerStep.setTimeTakenMs(0);
+    producerStep.setTimeTakenNanos(0);
+
+    activityMap.addActivity(producerStep);
+
+    WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
+        .get("channel1").getWorkflows().get("workflow1");
+
     ConsumerActivity consumerActivity = workflowActivity.getConsumerActivity();
     ProducerActivity producerActivity = workflowActivity.getProducerActivity();
-    
+
+    ServiceActivity serviceActivity1 = workflowActivity.getServices().get("service1");
+
+    ServiceActivity serviceListActivity1 = workflowActivity.getServices().get("serviceList1");
+    ServiceActivity serviceActivity2 = serviceListActivity1.getServices().get("service2");
+
     assertEquals(1, consumerActivity.getMessageCount());
     assertEquals(1, producerActivity.getMessageCount());
-    
-    String mapString = this.activityMap.toString();
-    
-    assertTrue(mapString.contains(ADAPTER_ID));
+
+    assertEquals(0, serviceActivity1.getMessageCount());
+    assertEquals(-1, serviceActivity1.getOrder());
+
+    assertEquals(1, serviceListActivity1.getMessageCount());
+    assertEquals(0, serviceListActivity1.getOrder());
+    assertEquals(1, serviceActivity2.getMessageCount());
+    assertEquals(1, serviceActivity2.getOrder());
+
+    String mapString = activityMap.toString();
+
+    assertTrue(mapString.contains(TestUtils.ADAPTER_ID));
     assertTrue(mapString.contains("channel1"));
     assertTrue(mapString.contains("workflow1"));
     assertTrue(mapString.contains("service1"));
+    assertTrue(mapString.contains("serviceList1"));
     assertTrue(mapString.contains("service2"));
+    assertTrue(mapString.contains("serviceList2"));
     assertTrue(mapString.contains("consumer"));
     assertTrue(mapString.contains("producer"));
-    
   }
-  
-  private Adapter buildNestedServiceTestAdapter() {
-    Adapter adapter = new Adapter();
-    adapter.setUniqueId(ADAPTER_ID);
-    Channel channel = new Channel();
-    channel.setUniqueId("channel1");
-    StandardWorkflow workflow = new StandardWorkflow();
-    workflow.setUniqueId("workflow1");
-    LogMessageService service = new LogMessageService();
-    service.setUniqueId("service1");
-    
-    LogMessageService service2 = new LogMessageService();
-    service2.setUniqueId("service2");
-    
-    ServiceList serviceList = new ServiceList(service2);
-    
-    NullMessageConsumer consumer = new NullMessageConsumer();
-    consumer.setUniqueId("consumer");
-    
-    NullMessageProducer producer = new NullMessageProducer();
-    producer.setUniqueId("producer");
-    
-    workflow.getServiceCollection().add(service);
-    workflow.getServiceCollection().add(serviceList);
-    workflow.setProducer(producer);
-    workflow.setConsumer(consumer);
-    channel.getWorkflowList().add(workflow);
-    adapter.getChannelList().add(channel);
-    
-    return adapter;
+
+  public void testProcessEventsWrongConsumerAndProducerProcessStepId() {
+    WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
+        .get("channel1").getWorkflows().get("workflow1");
+
+    ConsumerActivity consumerActivity = workflowActivity.getConsumerActivity();
+    ProducerActivity producerActivity = workflowActivity.getProducerActivity();
+
+    MessageProcessStep consumerStep = new MessageProcessStep();
+    consumerStep.setMessageId("1");
+    consumerStep.setStepInstanceId("differentId");
+    consumerStep.setStepType(StepType.CONSUMER);
+    consumerStep.setTimeStarted(System.currentTimeMillis());
+    consumerStep.setTimeStartedNanos(System.nanoTime());
+    consumerStep.setTimeTakenMs(1);
+    consumerStep.setTimeTakenNanos(1000);
+
+    consumerActivity.addActivity(consumerStep);
+
+    MessageProcessStep producerStep = new MessageProcessStep();
+    producerStep.setMessageId("1");
+    producerStep.setStepInstanceId("differentId");
+    producerStep.setStepType(StepType.PRODUCER);
+    producerStep.setTimeStarted(System.currentTimeMillis());
+    producerStep.setTimeStartedNanos(System.nanoTime());
+    producerStep.setTimeTakenMs(0);
+    producerStep.setTimeTakenNanos(0);
+
+    producerActivity.addActivity(producerStep);
+
+    assertEquals(0, consumerActivity.getMessageCount());
+    assertEquals(0, producerActivity.getMessageCount());
+
+    String mapString = activityMap.toString();
+
+    assertTrue(mapString.contains(TestUtils.ADAPTER_ID));
+    assertTrue(mapString.contains("channel1"));
+    assertTrue(mapString.contains("workflow1"));
+    assertTrue(mapString.contains("consumer"));
+    assertTrue(mapString.contains("producer"));
   }
+
 }

@@ -24,32 +24,34 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
   private ConsumerActivity consumerActivity;
 
   public WorkflowActivity() {
-    this.setServices(new LinkedHashMap<>());
+    setServices(new LinkedHashMap<>());
   }
-  
+
   @Override
   public void addActivity(ProcessStep processStep) {
-    String processStepID = processStep.getStepInstanceId();
-    if (StringUtils.equals(processStepID, this.getConsumerActivity().getUniqueId()) ||
-            processStep.getStepType() == StepType.CONSUMER) {
-      this.getConsumerActivity().addActivity(processStep);
-    } else if (StringUtils.equals(processStepID, this.getProducerActivity().getUniqueId()) ||
-            processStep.getStepType() == StepType.PRODUCER)
-      this.getProducerActivity().addActivity(processStep);
-    else {
-      for (String serviceId : this.getServices().keySet()) {
-        this.getServices().get(serviceId).addActivity(processStep);
+    if (uniqueIdAndTypeEquals(processStep, getConsumerActivity().getUniqueId(), StepType.CONSUMER)) {
+      getConsumerActivity().addActivity(processStep);
+    } else if (uniqueIdAndTypeEquals(processStep, getProducerActivity().getUniqueId(), StepType.PRODUCER)) {
+      getProducerActivity().addActivity(processStep);
+    } else {
+      for (String serviceId : getServices().keySet()) {
+        getServices().get(serviceId).addActivity(processStep);
       }
     }
   }
 
+  private boolean uniqueIdAndTypeEquals(ProcessStep processStep, String uniqueId, StepType stepType) {
+    String processStepID = processStep.getStepInstanceId();
+    return StringUtils.equals(processStepID, uniqueId) || processStep.getStepType() == stepType;
+  }
+
   @Override
   public void resetActivity() {
-    for(String serviceId : this.getServices().keySet()) {
-      this.getServices().get(serviceId).resetActivity();
+    for (String serviceId : getServices().keySet()) {
+      getServices().get(serviceId).resetActivity();
     }
-    this.getConsumerActivity().resetActivity();
-    this.getProducerActivity().resetActivity();
+    getConsumerActivity().resetActivity();
+    getProducerActivity().resetActivity();
   }
 
   public void addServiceActivity(ServiceActivity serviceActivity) {
@@ -87,7 +89,7 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     buffer.append(getUniqueId());
     buffer.append("\n");
     buffer.append(getConsumerActivity());
-    for(ServiceActivity service : getServices().values()) {
+    for (ServiceActivity service : getServices().values()) {
       buffer.append(service);
     }
     buffer.append(getProducerActivity());

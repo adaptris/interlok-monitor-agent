@@ -2,8 +2,9 @@ package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
 
-import com.adaptris.profiler.ProcessStep;
 import org.apache.commons.lang.StringUtils;
+
+import com.adaptris.profiler.ProcessStep;
 
 public class ProducerActivity extends BaseFlowActivity implements Serializable {
 
@@ -11,12 +12,9 @@ public class ProducerActivity extends BaseFlowActivity implements Serializable {
 
   @Override
   public void addActivity(ProcessStep processStep) {
-    if (StringUtils.equals(processStep.getStepInstanceId(), this.getUniqueId())) {
-      this.getMsTaken().add(processStep.getTimeTakenMs());
-      this.setAvgMsTaken(super.calculateAvgTimeTaken());
-      this.setMessageCount(this.getMessageCount() + 1);
-    }
-    else {
+    if (StringUtils.equals(processStep.getStepInstanceId(), getUniqueId())) {
+      addActivityMetrics(processStep);
+    } else {
       System.err.println("Unknown producer event received");
     }
   }
@@ -29,8 +27,8 @@ public class ProducerActivity extends BaseFlowActivity implements Serializable {
     buffer.append(" (");
     buffer.append(getMessageCount());
     buffer.append(" at ");
-    buffer.append(getAvgMsTaken());
-    buffer.append("  nanos (" + getAvgMsTaken() / 1000000 + " ms)");
+    buffer.append(getAvgNsTaken());
+    buffer.append("  nanos (").append(getAvgMsTaken()).append(" ms)");
     buffer.append(")");
     buffer.append("\n");
 
