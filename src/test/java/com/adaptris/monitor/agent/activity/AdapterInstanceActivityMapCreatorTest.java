@@ -1,10 +1,14 @@
 package com.adaptris.monitor.agent.activity;
 
 import com.adaptris.core.Adapter;
+import com.adaptris.core.Service;
 import com.adaptris.core.ServiceList;
 import com.adaptris.core.services.LogMessageService;
-
+import com.adaptris.core.services.metadata.AddMetadataService;
 import junit.framework.TestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdapterInstanceActivityMapCreatorTest extends TestCase {
 
@@ -71,4 +75,31 @@ public class AdapterInstanceActivityMapCreatorTest extends TestCase {
     }
   }
 
+  public void testScanClassReflectiveAllGetters() {
+    AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
+    AddMetadataService service = new AddMetadataService();
+    service.addMetadataElement("myKey1", "myValue1");
+    service.addMetadataElement("myKey2", "myValue2");
+    ServiceList serviceList = new ServiceList();
+    serviceList.add(service);
+    List<Service> services = activityMapCreator.scanClassReflectiveAllGetters(serviceList);
+    assertEquals(1, services.size());
+  }
+
+  public void testscanclassreflectiveallgettersthatcausedclasscastexception() {
+    AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
+    DummyWithPlainCollectionService wrapperService = new DummyWithPlainCollectionService();
+    AddMetadataService metadataService = new AddMetadataService();
+    List innerServiceList = new ArrayList();
+    innerServiceList.add(metadataService);
+    wrapperService.setPlainCollection(innerServiceList);
+    List<Service> services = null;
+    try {
+      services = activityMapCreator.scanClassReflectiveAllGetters(wrapperService);
+      assertEquals(1, services.size());
+    } catch (RuntimeException e) {
+      fail();
+//      assertTrue(ClassCastException.class.isInstance(e.getCause()));
+    }
+  }
 }

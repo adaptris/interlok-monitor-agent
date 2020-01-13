@@ -2,7 +2,10 @@ package com.adaptris.monitor.agent.activity;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -123,28 +126,39 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
    * @return
    */
   @SuppressWarnings("unchecked")
-  private List<Service> scanClassReflectiveAllGetters(Service service) {
+  // @VisibleForTesting
+  List<Service> scanClassReflectiveAllGetters(Service service) {
     try {
       List<Service> map = new ArrayList<>();
-      Arrays.asList(Introspector.getBeanInfo(service.getClass(), Object.class).getPropertyDescriptors())
-      .stream()
+      List<PropertyDescriptor> propertyDescriptors = Arrays.asList(Introspector.getBeanInfo(service.getClass(), Object.class).getPropertyDescriptors());
+      propertyDescriptors.stream()
       .filter(pd -> Objects.nonNull(pd.getReadMethod()))  // filter out properties with setters only
       .forEach(pd -> { // invoke method to get value
         try {
           Object value = pd.getReadMethod().invoke(service);
           if (value != null) {
-            if(value instanceof Service) {
+            if (value instanceof Service) {
               map.add((Service) value);
-            } else if (value instanceof Collection<?>) { // attempt to catch all collection with Service generic type.
-              ParameterizedType genericReturnType = (ParameterizedType) pd.getReadMethod().getGenericReturnType();
-              if(genericReturnType.getActualTypeArguments()[0] == Service.class) {
-                for(Service cService : (List<Service>) value) {
-                  map.add(cService);
+            }
+            else if (value instanceof Collection<?>) { // attempt to catch all collection with Service generic type.
+              Type methodReturnType = pd.getReadMethod().getGenericReturnType();
+              // Handle collection with generics
+              if (ParameterizedType.class.isInstance(methodReturnType)) {
+                ParameterizedType genericReturnType = (ParameterizedType) methodReturnType;
+                if (genericReturnType.getActualTypeArguments()[0] == Service.class) {
+                  for (Service cService : (List<Service>) value) {
+                    map.add(cService);
+                  }
                 }
-
+              }
+              // Handle plain collection ie without generics
+              else {
+                for (Object cService : (Collection)value) {
+                  if (Service.class.isInstance(cService))
+                    map.add((Service) cService);
+                }
               }
             }
-
           }
         } catch (Exception e) {
           throw new RuntimeException(e);
@@ -157,6 +171,18 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
     }
   }
 
+  public void wtfisit(Type o) {
+    System.out.println("Print given type is: " + o.getTypeName());
+    if (o instanceof Collection) {
+      System.out.println("Item is a collection");
+    }
+    else if (o instanceof  List) {
+      System.out.println("Item is a list");
+    }
+    else {
+      System.out.println("Unknown item");
+    }
+  }
   /**
    * Create the BaseActivity implementation object which will later contain performance data for each component.
    * @param AdaptrisComponent
@@ -188,5 +214,4 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
 
     return returnedBaseActivity;
   }
-
 }
