@@ -1,17 +1,22 @@
 package com.adaptris.monitor.agent.activity;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.adaptris.core.Adapter;
 import com.adaptris.profiler.MessageProcessStep;
 import com.adaptris.profiler.StepType;
 
-import junit.framework.TestCase;
 
-
-public class ActivityMapTest extends TestCase {
+public class ActivityMapTest {
 
   private ActivityMap activityMap;
 
-  @Override
+  @Before
   public void setUp() throws Exception {
     Adapter adapter = TestUtils.buildNestedServiceTestAdapter();
 
@@ -19,11 +24,12 @@ public class ActivityMapTest extends TestCase {
     activityMap = activityMapCreator.createBaseMap(adapter);
   }
 
-  @Override
+  @After
   public void tearDown() throws Exception {
     activityMap.resetActivity();
   }
 
+  @Test
   public void testProcessEvents() {
     MessageProcessStep serviceListStep = new MessageProcessStep();
     serviceListStep.setMessageId("1");
@@ -106,6 +112,7 @@ public class ActivityMapTest extends TestCase {
     assertTrue(mapString.contains("producer"));
   }
 
+  @Test
   public void testProcessEventsWrongConsumerAndProducerProcessStepId() {
     WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
         .get("channel1").getWorkflows().get("workflow1");
@@ -145,6 +152,38 @@ public class ActivityMapTest extends TestCase {
     assertTrue(mapString.contains("workflow1"));
     assertTrue(mapString.contains("consumer"));
     assertTrue(mapString.contains("producer"));
+  }
+  
+  // INTERLOK-3135
+  @Test
+  public void testConsumerAddedToCorrectWorkflow() throws Exception {
+    WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
+        .get("channel1").getWorkflows().get("workflow1");
+
+    MessageProcessStep consumerStep = new MessageProcessStep();
+    consumerStep.setMessageId("1");
+    consumerStep.setStepInstanceId("differentId");
+    consumerStep.setStepType(StepType.CONSUMER);
+    consumerStep.setTimeStarted(System.currentTimeMillis());
+    consumerStep.setTimeStartedNanos(System.nanoTime());
+    consumerStep.setTimeTakenMs(1);
+    consumerStep.setTimeTakenNanos(1000);
+
+    workflowActivity.addActivity(consumerStep);
+
+    MessageProcessStep producerStep = new MessageProcessStep();
+    producerStep.setMessageId("1");
+    producerStep.setStepInstanceId("differentId");
+    producerStep.setStepType(StepType.PRODUCER);
+    producerStep.setTimeStarted(System.currentTimeMillis());
+    producerStep.setTimeStartedNanos(System.nanoTime());
+    producerStep.setTimeTakenMs(0);
+    producerStep.setTimeTakenNanos(0);
+
+    workflowActivity.addActivity(producerStep);
+
+    assertEquals(0, workflowActivity.getConsumerActivity().getMessageCount());
+    assertEquals(0, workflowActivity.getProducerActivity().getMessageCount());
   }
 
 }

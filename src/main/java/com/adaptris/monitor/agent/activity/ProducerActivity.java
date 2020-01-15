@@ -2,7 +2,7 @@ package com.adaptris.monitor.agent.activity;
 
 import java.io.Serializable;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.adaptris.profiler.ProcessStep;
 
