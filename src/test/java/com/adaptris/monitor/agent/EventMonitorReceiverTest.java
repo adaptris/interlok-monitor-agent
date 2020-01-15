@@ -1,17 +1,22 @@
 package com.adaptris.monitor.agent;
 
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.adaptris.profiler.MessageProcessStep;
 
-import junit.framework.TestCase;
-
-public class EventMonitorReceiverTest extends TestCase {
+public class EventMonitorReceiverTest {
   
   private EventMonitorReceiver receiver;
   
+  @Before
   public void setUp() throws Exception {
     receiver = EventMonitorReceiver.getInstance();
   }
   
+  @Test
   public void testEvents() throws Exception {
     receiver.onEvent(new MessageProcessStep());
     

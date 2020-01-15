@@ -6,13 +6,13 @@ import java.util.List;
 
 public class DummyWithPlainCollectionService extends ServiceImp {
 
-    private List plainCollection;
+    private List<Service> plainCollection;
 
-    public List getPlainCollection() {
+    public List<Service> getPlainCollection() {
         return plainCollection;
     }
 
-    public void setPlainCollection(List plainCollection) {
+    public void setPlainCollection(List<Service> plainCollection) {
         this.plainCollection = plainCollection;
     }
 

@@ -1,15 +1,17 @@
 package com.adaptris.monitor.agent.json;
 
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Before;
+
 import com.adaptris.monitor.agent.activity.ConsumerActivity;
 import com.google.gson.JsonObject;
 
-import junit.framework.TestCase;
-
-public class ConsumerActivitySerializerTest extends TestCase {
+public class ConsumerActivitySerializerTest {
 
   private ConsumerActivitySerializer serializer;
 
-  @Override
+  @Before
   public void setUp() throws Exception {
     serializer = new ConsumerActivitySerializer();
   }

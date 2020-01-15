@@ -1,5 +1,10 @@
 package com.adaptris.monitor.agent;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import com.adaptris.core.Adapter;
@@ -10,9 +15,7 @@ import com.adaptris.monitor.agent.activity.ActivityMap;
 import com.adaptris.monitor.agent.activity.BaseActivity;
 import com.adaptris.profiler.client.EventReceiver;
 
-import junit.framework.TestCase;
-
-public class InterlokMonitorProfilerPluginTest extends TestCase {
+public class InterlokMonitorProfilerPluginTest {
   
   private static final String ADAPTER_ID = "adapter";
   
@@ -20,6 +23,7 @@ public class InterlokMonitorProfilerPluginTest extends TestCase {
   
   private Adapter adapter;
   
+  @Before
   public void setUp() throws Exception {
     plugin = new InterlokMonitorProfilerPlugin();
     adapter = this.buildTestAdapter();

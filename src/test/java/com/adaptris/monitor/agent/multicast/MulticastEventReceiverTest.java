@@ -8,6 +8,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -15,9 +17,7 @@ import com.adaptris.monitor.agent.EventReceiverListener;
 import com.adaptris.monitor.agent.activity.ActivityMap;
 import com.adaptris.monitor.agent.activity.AdapterActivity;
 
-import junit.framework.TestCase;
-
-public class MulticastEventReceiverTest extends TestCase {
+public class MulticastEventReceiverTest {
   
   private static final String DEFAULT_MULTICAST_GROUP = "224.0.0.4";
   private static final int DEFAULT_MULTICAST_PORT = 5577;
@@ -29,7 +29,7 @@ public class MulticastEventReceiverTest extends TestCase {
   
   private final Object monitor = new Object();
     
-  @Override
+  @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
@@ -37,6 +37,7 @@ public class MulticastEventReceiverTest extends TestCase {
     receiver.setMulticastSocketReceiver(mockReceiver);
   }
   
+  @Test
   public void testReceive() throws Exception {    
     when(mockReceiver.receive(STANDARD_PACKET_SIZE))
         .thenReturn(buildPacket());
