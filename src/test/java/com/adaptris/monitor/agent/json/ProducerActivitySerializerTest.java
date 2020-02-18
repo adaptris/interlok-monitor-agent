@@ -1,18 +1,23 @@
 package com.adaptris.monitor.agent.json;
 
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.adaptris.monitor.agent.activity.ProducerActivity;
 import com.google.gson.JsonObject;
 
-import junit.framework.TestCase;
-
-public class ProducerActivitySerializerTest extends TestCase {
+public class ProducerActivitySerializerTest {
   
   private ProducerActivitySerializer serializer; 
 
+  @Before
   public void setUp() throws Exception {
     serializer = new ProducerActivitySerializer();
   }
   
+  @Test
   public void testSerialize() throws Exception {
     ProducerActivity producerActivity = new ProducerActivity();
     producerActivity.setUniqueId("consumer-activity");

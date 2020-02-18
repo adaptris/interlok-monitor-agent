@@ -1,15 +1,17 @@
 package com.adaptris.monitor.agent;
 
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import com.adaptris.profiler.client.ClientPlugin;
 
-import junit.framework.TestCase;
-
-public class InterlokMonitorPluginFactoryTest extends TestCase {
+public class InterlokMonitorPluginFactoryTest {
   
   private InterlokMonitorPluginFactory factory;
   
+  @Before
   public void setUp() throws Exception {
     factory = new InterlokMonitorPluginFactory();
   }

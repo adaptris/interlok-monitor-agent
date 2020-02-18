@@ -1,17 +1,23 @@
 package com.adaptris.monitor.agent.activity;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Test;
+
 import com.adaptris.core.Adapter;
 import com.adaptris.core.Service;
 import com.adaptris.core.ServiceList;
 import com.adaptris.core.services.LogMessageService;
 import com.adaptris.core.services.metadata.AddMetadataService;
-import junit.framework.TestCase;
 
-import java.util.ArrayList;
-import java.util.List;
+public class AdapterInstanceActivityMapCreatorTest {
 
-public class AdapterInstanceActivityMapCreatorTest extends TestCase {
-
+  @Test
   public void testCreateBaseMap() {
     Adapter adapter = TestUtils.buildNestedServiceTestAdapter();
 
@@ -90,7 +96,7 @@ public class AdapterInstanceActivityMapCreatorTest extends TestCase {
     AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
     DummyWithPlainCollectionService wrapperService = new DummyWithPlainCollectionService();
     AddMetadataService metadataService = new AddMetadataService();
-    List innerServiceList = new ArrayList();
+    List<Service> innerServiceList = new ArrayList<Service>();
     innerServiceList.add(metadataService);
     wrapperService.setPlainCollection(innerServiceList);
     List<Service> services = null;

@@ -42,7 +42,7 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
 
   private boolean uniqueIdAndTypeEquals(ProcessStep processStep, String uniqueId, StepType stepType) {
     String processStepID = processStep.getStepInstanceId();
-    return StringUtils.equals(processStepID, uniqueId) || processStep.getStepType() == stepType;
+    return StringUtils.equals(processStepID, uniqueId) && processStep.getStepType() == stepType;
   }
 
   @Override
