@@ -10,6 +10,8 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -19,9 +21,7 @@ import com.adaptris.core.util.LifecycleHelper;
 import com.adaptris.monitor.agent.activity.ActivityMap;
 import com.adaptris.monitor.agent.activity.AdapterActivity;
 
-import junit.framework.TestCase;
-
-public class UDPProfilerConsumerTest extends TestCase {
+public class UDPProfilerConsumerTest {
   
   private static final String DEFAULT_MULTICAST_GROUP = "224.0.0.4";
   private static final int DEFAULT_MULTICAST_PORT = 5577;
@@ -33,6 +33,7 @@ public class UDPProfilerConsumerTest extends TestCase {
   @Mock private AdaptrisMessageListener mockMessageListener;
   @Mock private UDPDatagramReceiver mockDatagramReceiver;
   
+  @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
@@ -50,6 +51,7 @@ public class UDPProfilerConsumerTest extends TestCase {
     consumer.setPacketSize(120400);
   }
   
+  @Test
   public void testConsumeActivityMap() throws Exception {
     when(mockDatagramReceiver.receive(consumer))
         .thenReturn(buildPacket());
