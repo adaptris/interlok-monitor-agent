@@ -113,6 +113,51 @@ public class ActivityMapTest {
   }
 
   @Test
+  public void testWorkflowFailedMessages() {
+    MessageProcessStep workflowStepOne = new MessageProcessStep();
+    workflowStepOne.setMessageId("1");
+    workflowStepOne.setStepInstanceId("workflow1");
+    workflowStepOne.setStepType(StepType.WORKFLOW);
+    workflowStepOne.setTimeStarted(System.currentTimeMillis());
+    workflowStepOne.setTimeStartedNanos(System.nanoTime());
+    workflowStepOne.setTimeTakenMs(1);
+    workflowStepOne.setTimeTakenNanos(1000);
+    workflowStepOne.setOrder(0);
+    workflowStepOne.setFailed(true);
+    
+    MessageProcessStep workflowStepTwo = new MessageProcessStep();
+    workflowStepTwo.setMessageId("2");
+    workflowStepTwo.setStepInstanceId("workflow1");
+    workflowStepTwo.setStepType(StepType.WORKFLOW);
+    workflowStepTwo.setTimeStarted(System.currentTimeMillis());
+    workflowStepTwo.setTimeStartedNanos(System.nanoTime());
+    workflowStepTwo.setTimeTakenMs(1);
+    workflowStepTwo.setTimeTakenNanos(1000);
+    workflowStepTwo.setOrder(0);
+    workflowStepTwo.setFailed(false);
+    
+    MessageProcessStep workflowStepThree = new MessageProcessStep();
+    workflowStepThree.setMessageId("3");
+    workflowStepThree.setStepInstanceId("workflow1");
+    workflowStepThree.setStepType(StepType.WORKFLOW);
+    workflowStepThree.setTimeStarted(System.currentTimeMillis());
+    workflowStepThree.setTimeStartedNanos(System.nanoTime());
+    workflowStepThree.setTimeTakenMs(1);
+    workflowStepThree.setTimeTakenNanos(1000);
+    workflowStepThree.setOrder(0);
+    workflowStepThree.setFailed(true);
+
+    activityMap.addActivity(workflowStepOne);
+    activityMap.addActivity(workflowStepTwo);
+    activityMap.addActivity(workflowStepThree);
+    
+    WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
+        .get("channel1").getWorkflows().get("workflow1");
+    
+    assertEquals(2, workflowActivity.getFailedCount());
+  }
+  
+  @Test
   public void testProcessEventsWrongConsumerAndProducerProcessStepId() {
     WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
         .get("channel1").getWorkflows().get("workflow1");
