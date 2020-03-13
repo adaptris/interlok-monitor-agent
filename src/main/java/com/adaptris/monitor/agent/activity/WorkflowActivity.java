@@ -10,7 +10,7 @@ import com.adaptris.profiler.ProcessStep;
 import com.adaptris.profiler.StepType;
 import com.google.gson.annotations.Expose;
 
-public class WorkflowActivity extends BaseActivity implements Serializable {
+public class WorkflowActivity extends BaseFlowActivity implements Serializable {
 
   private static final long serialVersionUID = -1630350826201321890L;
 
@@ -22,6 +22,9 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
 
   @Expose
   private ConsumerActivity consumerActivity;
+  
+  @Expose
+  private int failedCount;
 
   public WorkflowActivity() {
     setServices(new LinkedHashMap<>());
@@ -33,9 +36,15 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
       getConsumerActivity().addActivity(processStep);
     } else if (uniqueIdAndTypeEquals(processStep, getProducerActivity().getUniqueId(), StepType.PRODUCER)) {
       getProducerActivity().addActivity(processStep);
-    } else {
+    } else if(processStep.getStepType() == StepType.SERVICE) {
       for (String serviceId : getServices().keySet()) {
         getServices().get(serviceId).addActivity(processStep);
+      }
+    } else { // must be a workflow activity
+      if(processStep.getStepInstanceId().equals(getUniqueId())) {
+        addActivityMetrics(processStep);
+        if(processStep.isFailed())
+          setFailedCount(getFailedCount() + 1);
       }
     }
   }
@@ -52,6 +61,8 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     }
     getConsumerActivity().resetActivity();
     getProducerActivity().resetActivity();
+    setFailedCount(0);
+    super.resetActivity();
   }
 
   public void addServiceActivity(ServiceActivity serviceActivity) {
@@ -82,11 +93,28 @@ public class WorkflowActivity extends BaseActivity implements Serializable {
     this.consumerActivity = consumerActivity;
   }
 
+  public int getFailedCount() {
+    return failedCount;
+  }
+
+  public void setFailedCount(int failedCount) {
+    this.failedCount = failedCount;
+  }
+
   @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     buffer.append("\t\tWorkflow = ");
     buffer.append(getUniqueId());
+    buffer.append(" (");
+    buffer.append(getMessageCount());
+    buffer.append(" ( failed (");
+    buffer.append(getFailedCount());
+    buffer.append(" )");
+    buffer.append(" at ");
+    buffer.append(getAvgNsTaken());
+    buffer.append("  nanos (").append(getAvgMsTaken()).append(" ms)");
+    buffer.append(")");
     buffer.append("\n");
     buffer.append(getConsumerActivity());
     for (ServiceActivity service : getServices().values()) {
