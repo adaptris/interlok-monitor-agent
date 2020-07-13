@@ -27,3 +27,5 @@ log4j.properties
 *.orig
 target
 bin
+src/main/generated
+gradle.properties
