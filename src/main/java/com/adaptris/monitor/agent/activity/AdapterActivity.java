@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.adaptris.naming.adapter.adapterURLContextFactory;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
@@ -57,4 +58,12 @@ public class AdapterActivity extends BaseActivity implements Serializable {
     return buffer.toString();
   }
 
+  public Object clone() {
+    AdapterActivity cloned = new AdapterActivity();
+    
+    // loop through all channels, clone them and put them in cloned.
+    
+    
+    return cloned;
+  }
 }
