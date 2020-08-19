@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
-public class ServiceActivity extends BaseFlowActivity implements Serializable {
+public class ServiceActivity extends BaseFlowActivity implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 5440965750057494954L;
 

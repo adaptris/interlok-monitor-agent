@@ -1,6 +1,7 @@
 package com.adaptris.monitor.agent.activity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
@@ -124,7 +125,7 @@ public class ActivityMapTest {
     workflowStepOne.setTimeTakenNanos(1000);
     workflowStepOne.setOrder(0);
     workflowStepOne.setFailed(true);
-    
+
     MessageProcessStep workflowStepTwo = new MessageProcessStep();
     workflowStepTwo.setMessageId("2");
     workflowStepTwo.setStepInstanceId("workflow1");
@@ -135,7 +136,7 @@ public class ActivityMapTest {
     workflowStepTwo.setTimeTakenNanos(1000);
     workflowStepTwo.setOrder(0);
     workflowStepTwo.setFailed(false);
-    
+
     MessageProcessStep workflowStepThree = new MessageProcessStep();
     workflowStepThree.setMessageId("3");
     workflowStepThree.setStepInstanceId("workflow1");
@@ -150,13 +151,13 @@ public class ActivityMapTest {
     activityMap.addActivity(workflowStepOne);
     activityMap.addActivity(workflowStepTwo);
     activityMap.addActivity(workflowStepThree);
-    
+
     WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
         .get("channel1").getWorkflows().get("workflow1");
-    
+
     assertEquals(2, workflowActivity.getFailedCount());
   }
-  
+
   @Test
   public void testProcessEventsWrongConsumerAndProducerProcessStepId() {
     WorkflowActivity workflowActivity = ((AdapterActivity) activityMap.getAdapters().get(TestUtils.ADAPTER_ID)).getChannels()
@@ -198,7 +199,7 @@ public class ActivityMapTest {
     assertTrue(mapString.contains("consumer"));
     assertTrue(mapString.contains("producer"));
   }
-  
+
   // INTERLOK-3135
   @Test
   public void testConsumerAddedToCorrectWorkflow() throws Exception {
@@ -229,6 +230,23 @@ public class ActivityMapTest {
 
     assertEquals(0, workflowActivity.getConsumerActivity().getMessageCount());
     assertEquals(0, workflowActivity.getProducerActivity().getMessageCount());
+  }
+
+  @Test
+  public void testClone() {
+    
+    ActivityMap activityMapClone = (ActivityMap) activityMap.clone();
+
+
+    assertEquals(activityMap.toString(), activityMapClone.toString());
+    
+    Adapter adapter = TestUtils.buildNestedServiceTestAdapter();
+    adapter.setUniqueId("cloneAdapter");
+    AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
+    
+    
+    activityMapClone = activityMapCreator.createBaseMap(adapter); 
+    assertNotEquals(activityMap.toString(), activityMapClone.toString());
   }
 
 }

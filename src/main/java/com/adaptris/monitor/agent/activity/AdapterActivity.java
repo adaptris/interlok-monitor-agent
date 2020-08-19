@@ -7,7 +7,7 @@ import java.util.Map;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
-public class AdapterActivity extends BaseActivity implements Serializable {
+public class AdapterActivity extends BaseActivity implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -4031508025636325352L;
 

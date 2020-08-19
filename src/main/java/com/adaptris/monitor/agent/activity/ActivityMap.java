@@ -7,7 +7,7 @@ import java.util.Map;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
-public class ActivityMap implements Serializable {
+public class ActivityMap implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 2523877428476982945L;
 
@@ -50,18 +50,10 @@ public class ActivityMap implements Serializable {
   public Object clone() {
     ActivityMap cloned = new ActivityMap();
     
-    // read up on clone()
-    // copy the adapters map into the cloned map.
-    
-    // object references
-    // Does Java pass arguments as reference or value?
-    
     this.getAdapters().forEach( (id, adapterActivity ) -> {
       BaseActivity clonedBaseActivity = (BaseActivity) ((AdapterActivity) adapterActivity).clone();
       cloned.getAdapters().put(id, clonedBaseActivity);
     });
-   
-    ;
     
     return cloned;
   }

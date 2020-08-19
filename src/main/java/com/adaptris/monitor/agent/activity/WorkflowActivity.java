@@ -10,7 +10,7 @@ import com.adaptris.profiler.ProcessStep;
 import com.adaptris.profiler.StepType;
 import com.google.gson.annotations.Expose;
 
-public class WorkflowActivity extends BaseFlowActivity implements Serializable {
+public class WorkflowActivity extends BaseFlowActivity implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -1630350826201321890L;
 
