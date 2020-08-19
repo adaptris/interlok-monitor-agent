@@ -90,5 +90,18 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
 
     return buffer.toString();
   }
+  
+  public Object clone() {
+    ServiceActivity cloned = new ServiceActivity();
+    getServices().forEach( (id, service) -> {
+      ServiceActivity clonedService = (ServiceActivity) service.clone();
+      cloned.getServices().put(id, clonedService);
+    });
+    
+    cloned.setUniqueId(getUniqueId());
+    cloned.setClassName(getClassName());
+    
+    return cloned;
+  }
 
 }

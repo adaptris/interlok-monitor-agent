@@ -34,5 +34,14 @@ public class ConsumerActivity extends BaseFlowActivity implements Serializable {
 
     return buffer.toString();
   }
+  
+  public Object clone() {
+    ConsumerActivity cloned = new ConsumerActivity();
+    
+    cloned.setUniqueId(getUniqueId());
+    cloned.setClassName(getClassName());
+    
+    return cloned;
+  }
 
 }

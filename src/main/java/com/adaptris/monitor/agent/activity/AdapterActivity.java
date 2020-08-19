@@ -57,4 +57,15 @@ public class AdapterActivity extends BaseActivity implements Serializable {
     return buffer.toString();
   }
 
+  public Object clone() {
+    AdapterActivity cloned = new AdapterActivity();
+    getChannels().forEach( (id, channel) -> {
+      ChannelActivity clonedChannel = (ChannelActivity) channel.clone();
+      cloned.getChannels().put(id, clonedChannel);
+    });
+    
+    cloned.setUniqueId(getUniqueId());
+    
+    return cloned;
+  }
 }

@@ -124,5 +124,24 @@ public class WorkflowActivity extends BaseFlowActivity implements Serializable {
 
     return buffer.toString();
   }
+  
+  public Object clone() {
+    WorkflowActivity cloned = new WorkflowActivity();
+    getServices().forEach( (id, service) -> {
+      ServiceActivity clonedService = (ServiceActivity) service.clone();
+      cloned.getServices().put(id, clonedService);
+    });
+    
+    ProducerActivity clonedProducer = (ProducerActivity) this.getProducerActivity().clone();
+    ConsumerActivity clonedConumser = (ConsumerActivity) this.getConsumerActivity().clone();
+    
+    cloned.setProducerActivity(clonedProducer);
+    cloned.setConsumerActivity(clonedConumser);
+    
+    cloned.setUniqueId(getUniqueId());
+    cloned.setClassName(getClassName());
+    
+    return cloned;
+  }
 
 }

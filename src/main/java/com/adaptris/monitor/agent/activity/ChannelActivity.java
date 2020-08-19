@@ -57,4 +57,15 @@ public class ChannelActivity extends BaseActivity implements Serializable {
     return buffer.toString();
   }
 
+  public Object clone() {
+    ChannelActivity cloned = new ChannelActivity();
+    getWorkflows().forEach( (id, workflow) -> {
+      WorkflowActivity clonedworkflow = (WorkflowActivity) workflow.clone();
+      cloned.getWorkflows().put(id, clonedworkflow);
+    });
+    
+    cloned.setUniqueId(getUniqueId());
+    
+    return cloned;
+  }
 }

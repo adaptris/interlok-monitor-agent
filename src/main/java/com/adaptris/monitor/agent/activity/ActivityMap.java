@@ -47,4 +47,22 @@ public class ActivityMap implements Serializable {
     return buffer.toString();
   }
 
+  public Object clone() {
+    ActivityMap cloned = new ActivityMap();
+    
+    // read up on clone()
+    // copy the adapters map into the cloned map.
+    
+    // object references
+    // Does Java pass arguments as reference or value?
+    
+    this.getAdapters().forEach( (id, adapterActivity ) -> {
+      BaseActivity clonedBaseActivity = (BaseActivity) ((AdapterActivity) adapterActivity).clone();
+      cloned.getAdapters().put(id, clonedBaseActivity);
+    });
+   
+    ;
+    
+    return cloned;
+  }
 }
