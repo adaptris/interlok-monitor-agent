@@ -7,7 +7,7 @@ import java.util.Map;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
-public class ActivityMap implements Serializable {
+public class ActivityMap implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 2523877428476982945L;
 
@@ -47,4 +47,14 @@ public class ActivityMap implements Serializable {
     return buffer.toString();
   }
 
+  public Object clone() {
+    ActivityMap cloned = new ActivityMap();
+    
+    this.getAdapters().forEach( (id, adapterActivity ) -> {
+      BaseActivity clonedBaseActivity = (BaseActivity) ((AdapterActivity) adapterActivity).clone();
+      cloned.getAdapters().put(id, clonedBaseActivity);
+    });
+    
+    return cloned;
+  }
 }

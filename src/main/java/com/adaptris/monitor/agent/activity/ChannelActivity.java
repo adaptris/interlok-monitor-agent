@@ -7,7 +7,7 @@ import java.util.Map;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
-public class ChannelActivity extends BaseActivity implements Serializable {
+public class ChannelActivity extends BaseActivity implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1922768482203698311L;
 
@@ -57,4 +57,15 @@ public class ChannelActivity extends BaseActivity implements Serializable {
     return buffer.toString();
   }
 
+  public Object clone() {
+    ChannelActivity cloned = new ChannelActivity();
+    getWorkflows().forEach( (id, workflow) -> {
+      WorkflowActivity clonedworkflow = (WorkflowActivity) workflow.clone();
+      cloned.getWorkflows().put(id, clonedworkflow);
+    });
+    
+    cloned.setUniqueId(getUniqueId());
+    
+    return cloned;
+  }
 }

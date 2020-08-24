@@ -10,7 +10,7 @@ import com.adaptris.profiler.ProcessStep;
 import com.adaptris.profiler.StepType;
 import com.google.gson.annotations.Expose;
 
-public class WorkflowActivity extends BaseFlowActivity implements Serializable {
+public class WorkflowActivity extends BaseFlowActivity implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -1630350826201321890L;
 
@@ -123,6 +123,25 @@ public class WorkflowActivity extends BaseFlowActivity implements Serializable {
     buffer.append(getProducerActivity());
 
     return buffer.toString();
+  }
+  
+  public Object clone() {
+    WorkflowActivity cloned = new WorkflowActivity();
+    getServices().forEach( (id, service) -> {
+      ServiceActivity clonedService = (ServiceActivity) service.clone();
+      cloned.getServices().put(id, clonedService);
+    });
+    
+    ProducerActivity clonedProducer = (ProducerActivity) this.getProducerActivity().clone();
+    ConsumerActivity clonedConumser = (ConsumerActivity) this.getConsumerActivity().clone();
+    
+    cloned.setProducerActivity(clonedProducer);
+    cloned.setConsumerActivity(clonedConumser);
+    
+    cloned.setUniqueId(getUniqueId());
+    cloned.setClassName(getClassName());
+    
+    return cloned;
   }
 
 }
