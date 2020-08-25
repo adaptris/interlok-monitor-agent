@@ -13,6 +13,9 @@ import com.adaptris.core.Adapter;
 import com.adaptris.core.Service;
 import com.adaptris.core.ServiceList;
 import com.adaptris.core.services.LogMessageService;
+import com.adaptris.core.services.conditional.ElseService;
+import com.adaptris.core.services.conditional.IfElse;
+import com.adaptris.core.services.conditional.ThenService;
 import com.adaptris.core.services.metadata.AddMetadataService;
 
 public class AdapterInstanceActivityMapCreatorTest {
@@ -69,6 +72,7 @@ public class AdapterInstanceActivityMapCreatorTest {
     assertEquals(0, serviceActivityList2.getServices().size());
   }
 
+  @Test
   public void testCreateBaseMapWrongObject() {
     Adapter adapter = TestUtils.buildNestedServiceTestAdapter();
 
@@ -81,6 +85,7 @@ public class AdapterInstanceActivityMapCreatorTest {
     }
   }
 
+  @Test
   public void testScanClassReflectiveAllGetters() {
     AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
     AddMetadataService service = new AddMetadataService();
@@ -91,7 +96,33 @@ public class AdapterInstanceActivityMapCreatorTest {
     List<Service> services = activityMapCreator.scanClassReflectiveAllGetters(serviceList);
     assertEquals(1, services.size());
   }
+  
+  @Test
+  public void testScanClassReflectiveAllGettersConditionalServices() {
+    AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
+    
+    LogMessageService logService = new LogMessageService();
+    
+    AddMetadataService addMetaService = new AddMetadataService();
+    addMetaService.addMetadataElement("myKey1", "myValue1");
+    addMetaService.addMetadataElement("myKey2", "myValue2");
+    
+    IfElse service = new IfElse();
+    
+    ThenService thenService = new ThenService();
+    thenService.setService(addMetaService);
+    
+    ElseService elseService = new ElseService();
+    elseService.setService(logService);
+    
+    service.setThen(thenService);
+    service.setOtherwise(elseService);
+    
+    List<Service> services = activityMapCreator.scanClassReflectiveAllGetters(service);
+    assertEquals(2, services.size());
+  }
 
+  @Test
   public void testscanclassreflectiveallgettersthatcausedclasscastexception() {
     AdapterInstanceActivityMapCreator activityMapCreator = new AdapterInstanceActivityMapCreator();
     DummyWithPlainCollectionService wrapperService = new DummyWithPlainCollectionService();

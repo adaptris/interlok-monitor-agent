@@ -10,7 +10,7 @@ import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
 public class ServiceActivity extends BaseFlowActivity implements Serializable, Cloneable {
-
+  
   private static final long serialVersionUID = 5440965750057494954L;
 
   @Expose
@@ -30,9 +30,7 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable, C
       setOrder(processStep.getOrder());
     } else {
       for(String serviceId : getServices().keySet()) {
-        if(processStep.getStepInstanceId().equals(serviceId)) {
-          getServices().get(serviceId).addActivity(processStep);
-        }
+        getServices().get(serviceId).addActivity(processStep);
       }
     }
   }
