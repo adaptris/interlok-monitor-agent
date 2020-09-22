@@ -34,5 +34,14 @@ public class ProducerActivity extends BaseFlowActivity implements Serializable {
 
     return buffer.toString();
   }
+  
+  public Object clone() {
+    ProducerActivity cloned = new ProducerActivity();
+    
+    cloned.setUniqueId(getUniqueId());
+    cloned.setClassName(getClassName());
+    
+    return cloned;
+  }
 
 }

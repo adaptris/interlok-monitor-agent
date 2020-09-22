@@ -40,12 +40,13 @@ public abstract class AbstractEventPropagator implements EventPropagator {
         try {
           // create a map of the events we have seen, then send the map.
           ActivityMap activityMap = eventMonitorReciever.getAdapterActivityMap();
-          activityMap.resetActivity();
+          ActivityMap clonedActivityMap = (ActivityMap) activityMap.clone();
+          clonedActivityMap.resetActivity();
           for(ProcessStep step : events) {
-            activityMap.addActivity(step);
+            clonedActivityMap.addActivity(step);
           }
 
-          propagateProcessEvent(activityMap);
+          propagateProcessEvent(clonedActivityMap);
         } catch (Throwable t) {
           t.printStackTrace();
         }

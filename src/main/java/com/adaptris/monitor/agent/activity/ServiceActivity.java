@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.adaptris.profiler.ProcessStep;
 import com.google.gson.annotations.Expose;
 
-public class ServiceActivity extends BaseFlowActivity implements Serializable {
-
+public class ServiceActivity extends BaseFlowActivity implements Serializable, Cloneable {
+  
   private static final long serialVersionUID = 5440965750057494954L;
 
   @Expose
@@ -30,9 +30,7 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
       setOrder(processStep.getOrder());
     } else {
       for(String serviceId : getServices().keySet()) {
-        if(processStep.getStepInstanceId().equals(serviceId)) {
-          getServices().get(serviceId).addActivity(processStep);
-        }
+        getServices().get(serviceId).addActivity(processStep);
       }
     }
   }
@@ -89,6 +87,19 @@ public class ServiceActivity extends BaseFlowActivity implements Serializable {
     }
 
     return buffer.toString();
+  }
+  
+  public Object clone() {
+    ServiceActivity cloned = new ServiceActivity();
+    getServices().forEach( (id, service) -> {
+      ServiceActivity clonedService = (ServiceActivity) service.clone();
+      cloned.getServices().put(id, clonedService);
+    });
+    
+    cloned.setUniqueId(getUniqueId());
+    cloned.setClassName(getClassName());
+    
+    return cloned;
   }
 
 }

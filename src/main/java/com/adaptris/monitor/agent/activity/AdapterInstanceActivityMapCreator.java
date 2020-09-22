@@ -3,7 +3,6 @@ package com.adaptris.monitor.agent.activity;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -25,6 +24,8 @@ import com.adaptris.core.Service;
 import com.adaptris.core.ServiceCollection;
 import com.adaptris.core.Workflow;
 import com.adaptris.core.WorkflowImp;
+import com.adaptris.core.services.conditional.ElseService;
+import com.adaptris.core.services.conditional.ThenService;
 
 public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
 
@@ -139,6 +140,12 @@ public class AdapterInstanceActivityMapCreator implements ActivityMapCreator {
           if (value != null) {
             if (value instanceof Service) {
               map.add((Service) value);
+            }
+            else if (value instanceof ThenService) {
+              map.add((Service) ((ThenService) value).getService());
+            }
+            else if (value instanceof ElseService) {
+              map.add((Service) ((ElseService) value).getService());
             }
             else if (value instanceof Collection<?>) { // attempt to catch all collection with Service generic type.
               Type methodReturnType = pd.getReadMethod().getGenericReturnType();
