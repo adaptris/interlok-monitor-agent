@@ -4,4 +4,4 @@
 
 ## Usage
 
-https://interlok.adaptris.net/interlok-docs/developer-profiler.html
+[https://interlok.adaptris.net/interlok-docs/#/pages/developer/developer-profiler](https://interlok.adaptris.net/interlok-docs/#/pages/developer/developer-profiler)
