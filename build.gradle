@@ -222,6 +222,7 @@ publishing {
         properties.appendNode("target", "3.9.0+")
         properties.appendNode("tags", "profiling")
         properties.appendNode("license", "false")
+        properties.appendNode("repository", "https://github.com/adaptris/interlok-monitor-agent")
       }
     }
   }
