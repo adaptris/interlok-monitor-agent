@@ -216,12 +216,13 @@ publishing {
 
       pom.withXml {
         asNode().appendNode("description", "Expose profiling data via Multicast and JMX from the Interlok-Profiler.")
-        asNode().appendNode("url", "https://interlok.adaptris.net/interlok-docs/developer-profiler.html")
+        asNode().appendNode("url", "https://interlok.adaptris.net/interlok-docs/#/pages/developer/developer-profiler")
         asNode().appendNode("name", componentName)
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.9.0+")
         properties.appendNode("tags", "profiling")
         properties.appendNode("license", "false")
+        properties.appendNode("repository", "https://github.com/adaptris/interlok-monitor-agent")
       }
     }
   }
