@@ -6,6 +6,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+import com.adaptris.core.CoreException;
 import com.adaptris.core.runtime.AdapterComponentMBean;
 import com.adaptris.core.util.JmxHelper;
 import com.adaptris.monitor.agent.AbstractEventPropagator;
@@ -30,13 +31,13 @@ public class JmxEventPropagator extends AbstractEventPropagator {
   }
 
   @Override
-  public void propagateProcessEvent(ActivityMap activityMap) {
+  public void propagateProcessEvent(ActivityMap activityMap) throws CoreException {
     log.debug(activityMap.toString());
 
     sendJmx(activityMap);
   }
 
-  private void sendJmx(ActivityMap activityMap) {
+  private void sendJmx(ActivityMap activityMap) throws CoreException {
     this.eventMBean.addEventActivityMap(activityMap);
   }
 

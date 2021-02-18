@@ -35,7 +35,7 @@ public class JmxEventPropagatorTest {
     propagator.propagateProcessEvent(activityMap);
     
     assertEquals(1, propagator.getEventMBean().getEventCount());
-    assertNotNull(propagator.getEventMBean().getEventActivityMap());
+    assertNotNull(propagator.getEventMBean().getEventActivityMaps());
   }
 
   @Test
