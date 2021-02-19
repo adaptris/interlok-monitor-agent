@@ -1,13 +1,16 @@
 package com.adaptris.monitor.agent.jmx;
 
-import java.util.Queue;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.QueueUtils;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.core.CoreException;
+import com.adaptris.core.cache.ExpiringMapCache;
 import com.adaptris.monitor.agent.activity.ActivityMap;
+import com.adaptris.util.TimeInterval;
 
 public class ProfilerEventClient implements ProfilerEventClientMBean {
   
@@ -15,9 +18,11 @@ public class ProfilerEventClient implements ProfilerEventClientMBean {
 
   private static final int DEFAULT_MAX_EVENT_HISTORY = 100;
   
+  private static final long DEFAULT_EXPIRY = 10;
+  
   private int maxEventHistory = 0;
   
-  private Queue<ActivityMap> eventQueue;
+  private ExpiringMapCache eventCache;
   
   public ProfilerEventClient() {
     
@@ -34,32 +39,42 @@ public class ProfilerEventClient implements ProfilerEventClientMBean {
   public int maxEventHistory() {
     return this.getMaxEventHistory() > 0 ? this.getMaxEventHistory() : DEFAULT_MAX_EVENT_HISTORY;
   }
-
-  public Queue<ActivityMap> getEventQueue() {
-    if(eventQueue == null)
-      this.setEventQueue(QueueUtils.synchronizedQueue(new CircularFifoQueue<ActivityMap>(this.maxEventHistory())));
-    
-    log.trace("get queue: " + eventQueue.size());
-    return eventQueue;
-  }
-
-  public void setEventQueue(Queue<ActivityMap> eventBuffer) {
-    this.eventQueue = eventBuffer;
+  
+  public int getEventCount() throws CoreException {
+    log.trace("get count: " + this.getEventCache().size());
+    return this.getEventCache().size();
   }
   
-  public int getEventCount() {
-    log.trace("get count: " + this.getEventQueue().size());
-    return this.getEventQueue().size();
-  }
-  
-  public void addEventActivityMap(ActivityMap activityMap) {
-    this.getEventQueue().offer(activityMap);
+  public void addEventActivityMap(ActivityMap activityMap) throws CoreException {
+    this.getEventCache().put(Long.toString(System.currentTimeMillis()), activityMap);
     log.trace("Add: " + this.getEventCount());
   }
   
-  public ActivityMap getEventActivityMap() {
+  public List<ActivityMap> getEventActivityMaps() throws CoreException {
     log.trace("get map: " + this.getEventCount());
-    return (ActivityMap) this.getEventQueue().poll();
+    return this.getEventCache().getKeys().stream().map( key -> {
+      try {
+        return (ActivityMap) getEventCache().get(key);
+      } catch (CoreException e) {
+        return null;
+      }
+    }).filter(item -> item instanceof ActivityMap).collect(Collectors.toList());
+  }
+
+  public ExpiringMapCache getEventCache() throws CoreException {
+    if(eventCache == null) {
+      setEventCache(new ExpiringMapCache()
+          .withExpiration(new TimeInterval(DEFAULT_EXPIRY, TimeUnit.SECONDS))
+          .withMaxEntries(maxEventHistory()));
+      
+      eventCache.init();
+    }
+    log.trace("get queue: " + eventCache.size());
+    return eventCache;
+  }
+
+  public void setEventCache(ExpiringMapCache eventCache) {
+    this.eventCache = eventCache;
   }
   
 }
