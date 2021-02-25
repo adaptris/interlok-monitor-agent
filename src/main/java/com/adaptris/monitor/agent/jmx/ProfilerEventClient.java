@@ -41,17 +41,14 @@ public class ProfilerEventClient implements ProfilerEventClientMBean {
   }
   
   public int getEventCount() throws CoreException {
-    log.trace("get count: " + this.getEventCache().size());
     return this.getEventCache().size();
   }
   
   public void addEventActivityMap(ActivityMap activityMap) throws CoreException {
     this.getEventCache().put(Long.toString(System.currentTimeMillis()), activityMap);
-    log.trace("Add: " + this.getEventCount());
   }
   
   public List<ActivityMap> getEventActivityMaps() throws CoreException {
-    log.trace("get map: " + this.getEventCount());
     return this.getEventCache().getKeys().stream().map( key -> {
       try {
         return (ActivityMap) getEventCache().get(key);
@@ -69,7 +66,6 @@ public class ProfilerEventClient implements ProfilerEventClientMBean {
       
       eventCache.init();
     }
-    log.trace("get queue: " + eventCache.size());
     return eventCache;
   }
 
