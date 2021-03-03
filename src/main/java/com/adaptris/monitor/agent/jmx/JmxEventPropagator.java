@@ -32,7 +32,7 @@ public class JmxEventPropagator extends AbstractEventPropagator {
 
   @Override
   public void propagateProcessEvent(ActivityMap activityMap) throws CoreException {
-    log.debug(activityMap.toString());
+    log.trace(activityMap.toString());
 
     sendJmx(activityMap);
   }
