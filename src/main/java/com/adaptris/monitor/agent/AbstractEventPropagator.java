@@ -35,7 +35,6 @@ public abstract class AbstractEventPropagator implements EventPropagator {
       }
 
       List<ProcessStep> events = eventMonitorReciever.getEvents();
-      log.debug("Getting process events - " + events.size());
       if(events.size() > 0) {
         try {
           // create a map of the events we have seen, then send the map.
